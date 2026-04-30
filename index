@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Harden Express — Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0B0D13; --surf:#111419; --card:#171B26; --border:#1E2436;
+  --border2:#2A3148; --text:#EEF2FF; --sub:#94A3B8; --dim:#475569;
+  --amber:#EF9F27; --amber-d:#BA7517; --amber-bg:#1C1508;
+  --blue:#378ADD; --teal:#1D9E75; --red:#E24B4A; --green:#639922;
+  --warn-bg:#1C1200; --warn-c:#F59E0B;
+  --ok-bg:#0A1A0A; --ok-c:#4ADE80;
+  --danger-bg:#1C0808; --danger-c:#F87171;
+}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;}
+button{font-family:'Outfit',sans-serif;cursor:pointer;}
+input{font-family:'Outfit',sans-serif;background:var(--surf);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:7px 10px;font-size:13px;outline:none;}
+input:focus{border-color:var(--amber);}
+input::placeholder{color:var(--dim);}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.5.0/Recharts.js"></script>
+<script>
+const{useState,createElement:h,useEffect}=React;
+const{BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,ComposedChart,Line}=Recharts;
+
+/* ─── Brand colors ─────────────────────────────────────────── */
+const C={
+  amber:"#EF9F27",amberD:"#BA7517",amberBg:"#1C1508",
+  blue:"#378ADD",teal:"#1D9E75",red:"#E24B4A",green:"#4ADE80",
+  text:"#EEF2FF",sub:"#94A3B8",dim:"#475569",
+  bg:"#0B0D13",surf:"#111419",card:"#171B26",
+  border:"#1E2436",border2:"#2A3148",
+  warnBg:"#1C1200",warnC:"#F59E0B",
+  okBg:"#0A1A0A",okC:"#4ADE80",
+  dangerBg:"#1C0808",dangerC:"#F87171",
+};
+
+/* ─── Helpers ───────────────────────────────────────────────── */
+const R$=v=>`R$ ${Math.round(v).toLocaleString("pt-BR")}`;
+const Lit=v=>`${v.toLocaleString("pt-BR")} L`;
+const stDias=d=>d>30?"critico":d>20?"alerta":"ok";
+const stEst=(a,m)=>a===0?"critico":a<m?"alerta":"ok";
+
+/* ─── Mock data (espelha estrutura real do Sheets) ──────────── */
+/*
+  Conecte a URL do Apps Script em Configurações para sincronizar dados reais.
+  Formato esperado: GET ?aba=NomeDaAba → retorna JSON com rows da planilha.
+  Abas usadas: Vendas, Estoque, Vasilhames, Frota, Config
+*/
+const MOCK={
+  mes:[
+    {m:"Out/24",r:48200,l:1840},{m:"Nov/24",r:52100,l:2010},
+    {m:"Dez/24",r:71300,l:2890},{m:"Jan/25",r:44800,l:1720},
+    {m:"Fev/25",r:49600,l:1900},{m:"Mar/25",r:58900,l:2260},
+    {m:"Abr/25",r:63400,l:2430}
+  ],
+  mix:[
+    {n:"Pilsen 50L",l:4800},{n:"Pilsen 30L",l:2700},
+    {n:"IPA 30L",l:1500},{n:"Session 30L",l:900},
+    {n:"Black 10L",l:480},{n:"P.Malte 30L",l:420}
+  ],
+  cli:[
+    {n:"Bar do Zé",l:890,r:8200},{n:"Choperia Central",l:760,r:7100},
+    {n:"Restaurante Sol",l:640,r:5900},{n:"Empório Praça",l:520,r:4800},
+    {n:"Bar Atlético",l:480,r:4400},{n:"Espaço Gourmet",l:410,r:3800}
+  ],
+  est:[
+    {s:"HRD-PIL-50",n:"Pilsen 50L",a:24,m:10,c:"Barril"},
+    {s:"HRD-PIL-30",n:"Pilsen 30L",a:18,m:8,c:"Barril"},
+    {s:"HRD-PIL-20",n:"Pilsen 20L",a:6,m:5,c:"Barril"},
+    {s:"HRD-PIL-10",n:"Pilsen 10L",a:3,m:4,c:"Barril"},
+    {s:"HRD-IPA-30",n:"IPA 30L",a:12,m:6,c:"Barril"},
+    {s:"HRD-IPA-50",n:"IPA 50L",a:4,m:4,c:"Barril"},
+    {s:"HRD-SES-30",n:"Session IPA 30L",a:8,m:4,c:"Barril"},
+    {s:"HRD-BLK-10",n:"Black 10L",a:0,m:4,c:"Barril"},
+    {s:"HRD-PM-30",n:"Puro Malte 30L",a:5,m:3,c:"Barril"},
+    {s:"HRD-COPO",n:"Copo 500ml",a:12,m:5,c:"Acessório"},
+    {s:"HRD-CANEC",n:"Caneca Vidro",a:2,m:3,c:"Acessório"},
+    {s:"HRD-BONE",n:"Boné Harden",a:8,m:2,c:"Marketing"},
+    {s:"HRD-WIND",n:"Windbanner",a:1,m:2,c:"Marketing"}
+  ],
+  bar:[
+    {cl:"Bar do Zé",tam:"50L",q:3,d:12},{cl:"Bar do Zé",tam:"30L",q:2,d:12},
+    {cl:"Choperia Central",tam:"50L",q:4,d:8},{cl:"Restaurante Sol",tam:"30L",q:2,d:22},
+    {cl:"Empório Praça",tam:"50L",q:2,d:35},{cl:"Bar Atlético",tam:"30L",q:1,d:18},
+    {cl:"Bar Atlético",tam:"10L",q:3,d:18},{cl:"Espaço Gourmet",tam:"50L",q:2,d:41},
+    {cl:"Petiscaria Boa",tam:"30L",q:1,d:9},{cl:"Birosca Beto",tam:"10L",q:2,d:28}
+  ],
+  mat:[
+    {cl:"Bar do Zé",mat:"Chopeira",q:1,d:180},{cl:"Choperia Central",mat:"Chopeira",q:2,d:95},
+    {cl:"Restaurante Sol",mat:"Chopeira",q:1,d:210},{cl:"Empório Praça",mat:"Chopeira",q:1,d:310},
+    {cl:"Bar do Zé",mat:"Cilindro CO2",q:1,d:12},{cl:"Choperia Central",mat:"Cilindro CO2",q:2,d:8},
+    {cl:"Restaurante Sol",mat:"Cilindro CO2",q:1,d:22},{cl:"Empório Praça",mat:"Cilindro CO2",q:1,d:35},
+    {cl:"Bar Atlético",mat:"Suporte Barril",q:2,d:45}
+  ],
+  abast:[
+    {dt:"28/04",v:"Sprinter HRD1",km:48230,l:45,c:292.5},
+    {dt:"25/04",v:"Fiorino HRD2",km:31100,l:28,c:182},
+    {dt:"22/04",v:"Sprinter HRD1",km:47980,l:42,c:273},
+    {dt:"20/04",v:"VW Delivery HRD3",km:22450,l:55,c:357.5},
+    {dt:"18/04",v:"Fiorino HRD2",km:30820,l:25,c:162.5},
+    {dt:"15/04",v:"Sprinter HRD1",km:47650,l:41,c:266.5}
+  ],
+  frota:[
+    {v:"Sprinter HRD1",km:1280,cons:8.2,custo:832,ent:18},
+    {v:"Fiorino HRD2",km:890,cons:10.4,custo:345,ent:12},
+    {v:"VW Delivery HRD3",km:1420,cons:6.8,custo:696,ent:22}
+  ],
+  tanque:{cap:1000,atual:380,preco:6.5}
+};
+
+/* ─── Atoms ─────────────────────────────────────────────────── */
+const tt={background:C.card,border:`1px solid ${C.border2}`,borderRadius:8,fontSize:12,color:C.text};
+
+function Kpi({label,value,sub,ac}){
+  return h("div",{style:{background:C.surf,border:`1px solid ${C.border}`,borderRadius:10,padding:"14px 18px",flex:1,minWidth:130}},
+    h("div",{style:{fontSize:11,fontWeight:500,color:C.sub,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:5}},label),
+    h("div",{style:{fontSize:22,fontWeight:500,color:ac||C.text,lineHeight:1.1,fontFamily:"'JetBrains Mono',monospace"}},value),
+    sub&&h("div",{style:{fontSize:11,color:C.dim,marginTop:4}},sub)
+  );
+}
+
+function Card({title,children,style={}}){
+  return h("div",{style:{background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"18px 22px",...style}},
+    title&&h("div",{style:{fontSize:11,fontWeight:500,color:C.dim,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:14}},title),
+    children
+  );
+}
+
+function Bdg({status}){
+  const map={
+    ok:{bg:C.okBg,c:C.okC,t:"OK"},
+    alerta:{bg:C.warnBg,c:C.warnC,t:"Alerta"},
+    critico:{bg:C.dangerBg,c:C.dangerC,t:"Crítico"}
+  };
+  const s=map[status]||map.ok;
+  return h("span",{style:{background:s.bg,color:s.c,fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:4,letterSpacing:"0.04em"}},s.t);
+}
+
+function TabBtn({active,color,onClick,children}){
+  return h("button",{onClick,style:{
+    padding:"10px 16px",border:"none",background:"transparent",cursor:"pointer",
+    borderBottom:active?`2px solid ${color}`:"2px solid transparent",
+    color:active?color:C.sub,fontWeight:active?500:400,fontSize:13,
+    fontFamily:"'Outfit',sans-serif",marginBottom:-1
+  }},children);
+}
+
+function FilterBtn({active,onClick,children}){
+  return h("button",{onClick,style:{
+    padding:"5px 13px",borderRadius:6,border:`1px solid ${active?C.amber:C.border2}`,
+    background:active?C.amberBg:"transparent",color:active?C.amber:C.sub,
+    fontSize:12,cursor:"pointer",fontWeight:active?500:400,fontFamily:"'Outfit',sans-serif"
+  }},children);
+}
+
+function TH({c}){
+  return h("th",{style:{padding:"8px 12px",textAlign:"left",fontSize:10,fontWeight:500,color:C.dim,textTransform:"uppercase",letterSpacing:"0.07em",borderBottom:`1px solid ${C.border}`,whiteSpace:"nowrap"}},c);
+}
+function TD({c,ac,mo}){
+  return h("td",{style:{padding:"10px 12px",fontSize:12,color:ac||C.text,fontFamily:mo?"'JetBrains Mono',monospace":undefined}},c);
+}
+
+/* ─── View: Vendas ──────────────────────────────────────────── */
+function Vendas({D}){
+  const ult=D.mes[D.mes.length-1],ant=D.mes[D.mes.length-2];
+  const vr=((ult.r-ant.r)/ant.r*100).toFixed(1);
+  const totL=D.mes.reduce((s,m)=>s+m.l,0);
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+    h("div",{style:{display:"flex",gap:12}},
+      h(Kpi,{label:"Receita abr/25",value:R$(ult.r),sub:`${vr>0?"▲":"▼"} ${Math.abs(vr)}% vs mar`,ac:C.amber}),
+      h(Kpi,{label:"Volume abr/25",value:Lit(ult.l),sub:`7M: ${Lit(totL)}`}),
+      h(Kpi,{label:"Ticket médio",value:"R$ 185",sub:"por pedido"}),
+      h(Kpi,{label:"Clientes ativos",value:D.cli.length,sub:"mês atual"})
+    ),
+    h(Card,{title:"Evolução mensal — receita & volume"},
+      h(ResponsiveContainer,{width:"100%",height:210},
+        h(ComposedChart,{data:D.mes},
+          h(CartesianGrid,{strokeDasharray:"3 3",stroke:C.border}),
+          h(XAxis,{dataKey:"m",tick:{fontSize:11,fill:C.sub},axisLine:false,tickLine:false}),
+          h(YAxis,{yAxisId:"r",tick:{fontSize:11,fill:C.sub},axisLine:false,tickLine:false,tickFormatter:v=>`R$${v/1000}k`}),
+          h(YAxis,{yAxisId:"l",orientation:"right",tick:{fontSize:11,fill:C.sub},axisLine:false,tickLine:false,tickFormatter:v=>`${v}L`}),
+          h(Tooltip,{contentStyle:tt,formatter:(v,n)=>[n==="r"?R$(v):Lit(v),n==="r"?"Receita":"Litros"]}),
+          h(Bar,{yAxisId:"r",dataKey:"r",name:"r",fill:C.amber,opacity:0.85,radius:[4,4,0,0]}),
+          h(Line,{yAxisId:"l",type:"monotone",dataKey:"l",name:"l",stroke:C.blue,strokeWidth:2.5,dot:{r:4,fill:C.blue}})
+        )
+      )
+    ),
+    h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      h(Card,{title:"Mix de produtos — litros"},
+        h(ResponsiveContainer,{width:"100%",height:200},
+          h(BarChart,{data:D.mix,layout:"vertical"},
+            h(CartesianGrid,{strokeDasharray:"3 3",stroke:C.border,horizontal:false}),
+            h(XAxis,{type:"number",tick:{fontSize:10,fill:C.sub},axisLine:false,tickLine:false}),
+            h(YAxis,{type:"category",dataKey:"n",tick:{fontSize:11,fill:C.sub},axisLine:false,tickLine:false,width:95}),
+            h(Tooltip,{contentStyle:tt,formatter:v=>[Lit(v),"Litros"]}),
+            h(Bar,{dataKey:"l",name:"Litros",fill:C.amber,radius:[0,4,4,0]})
+          )
+        )
+      ),
+      h(Card,{title:"Top clientes — receita"},
+        h(ResponsiveContainer,{width:"100%",height:200},
+          h(BarChart,{data:D.cli,layout:"vertical"},
+            h(CartesianGrid,{strokeDasharray:"3 3",stroke:C.border,horizontal:false}),
+            h(XAxis,{type:"number",tick:{fontSize:10,fill:C.sub},axisLine:false,tickLine:false,tickFormatter:v=>`${v/1000}k`}),
+            h(YAxis,{type:"category",dataKey:"n",tick:{fontSize:11,fill:C.sub},axisLine:false,tickLine:false,width:110}),
+            h(Tooltip,{contentStyle:tt,formatter:v=>[R$(v),"Receita"]}),
+            h(Bar,{dataKey:"r",name:"Receita",fill:C.teal,radius:[0,4,4,0]})
+          )
+        )
+      )
+    )
+  );
+}
+
+/* ─── View: Estoque ─────────────────────────────────────────── */
+function Estoque({D}){
+  const[cat,setCat]=useState("Todos");
+  const cats=["Todos","Barril","Acessório","Marketing"];
+  const itens=cat==="Todos"?D.est:D.est.filter(i=>i.c===cat);
+  const st=i=>stEst(i.a,i.m);
+  const alf=D.est.filter(i=>st(i)!=="ok").length;
+  const crt=D.est.filter(i=>st(i)==="critico").length;
+  const totB=D.est.filter(i=>i.c==="Barril").reduce((s,i)=>s+i.a,0);
+  const barP=D.est.filter(i=>i.c==="Barril");
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+    h("div",{style:{display:"flex",gap:12}},
+      h(Kpi,{label:"Total SKUs",value:D.est.length,sub:"cadastrados"}),
+      h(Kpi,{label:"Em alerta",value:alf,sub:"abaixo do mínimo",ac:alf>0?C.amber:undefined}),
+      h(Kpi,{label:"Críticos",value:crt,sub:"estoque zerado",ac:crt>0?C.red:undefined}),
+      h(Kpi,{label:"Barris disponíveis",value:totB,sub:"todas as linhas",ac:C.amber})
+    ),
+    h(Card,{title:"Barris — saldo atual vs mínimo"},
+      h(ResponsiveContainer,{width:"100%",height:185},
+        h(BarChart,{data:barP},
+          h(CartesianGrid,{strokeDasharray:"3 3",stroke:C.border}),
+          h(XAxis,{dataKey:"n",tick:{fontSize:10,fill:C.sub},axisLine:false,tickLine:false}),
+          h(YAxis,{tick:{fontSize:11,fill:C.sub},axisLine:false,tickLine:false}),
+          h(Tooltip,{contentStyle:tt}),
+          h(Bar,{dataKey:"a",name:"Atual",fill:C.amber,radius:[4,4,0,0]}),
+          h(Bar,{dataKey:"m",name:"Mínimo",fill:C.border2,radius:[4,4,0,0]})
+        )
+      )
+    ),
+    h(Card,{title:"Posição de estoque"},
+      h("div",{style:{display:"flex",gap:8,marginBottom:14}},
+        cats.map(c=>h(FilterBtn,{key:c,active:cat===c,onClick:()=>setCat(c)},c))
+      ),
+      h("div",{style:{overflowX:"auto"}},
+        h("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:480}},
+          h("thead",null,h("tr",null,
+            h(TH,{c:"SKU"}),h(TH,{c:"Produto"}),h(TH,{c:"Cat."}),
+            h(TH,{c:"Atual"}),h(TH,{c:"Mín."}),h(TH,{c:"Status"})
+          )),
+          h("tbody",null,itens.map((i,idx)=>
+            h("tr",{key:i.s,style:{background:idx%2===0?"transparent":C.surf}},
+              h(TD,{c:i.s,mo:true,ac:C.dim}),h(TD,{c:i.n}),h(TD,{c:i.c,ac:C.sub}),
+              h(TD,{c:i.a,mo:true,ac:st(i)==="ok"?C.green:st(i)==="alerta"?C.amber:C.red}),
+              h(TD,{c:i.m,mo:true,ac:C.dim}),
+              h("td",{style:{padding:"10px 12px"}},h(Bdg,{status:st(i)}))
+            )
+          ))
+        )
+      )
+    )
+  );
+}
+
+/* ─── View: Retornáveis ─────────────────────────────────────── */
+function Retornaveis({D}){
+  const[tab,setTab]=useState("barris");
+  const totB=D.bar.reduce((s,b)=>s+b.q,0);
+  const totM=D.mat.reduce((s,m)=>s+m.q,0);
+  const crtB=D.bar.filter(b=>b.d>30).length;
+  const maxD=Math.max(...D.bar.map(b=>b.d));
+  const tamAgg=D.bar.reduce((acc,b)=>{acc[b.tam]=(acc[b.tam]||0)+b.q;return acc},{});
+  const tamData=Object.entries(tamAgg).map(([k,v])=>({n:`Barril ${k}`,q:v}));
+  const matAgg=D.mat.reduce((acc,m)=>{acc[m.mat]=(acc[m.mat]||0)+m.q;return acc},{});
+  const matData=Object.entries(matAgg).map(([k,v])=>({n:k,q:v}));
+  const barS=[...D.bar].sort((a,b)=>b.d-a.d);
+  const matS=[...D.mat].sort((a,b)=>b.d-a.d);
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+    h("div",{style:{display:"flex",gap:12}},
+      h(Kpi,{label:"Barris em campo",value:totB,sub:`${crtB} críticos >30d`,ac:C.amber}),
+      h(Kpi,{label:"Materiais em campo",value:totM,sub:"chopeiras + CO2 + suportes",ac:C.blue}),
+      h(Kpi,{label:"Clientes c/ barris",value:[...new Set(D.bar.map(b=>b.cl))].length,sub:"ativos"}),
+      h(Kpi,{label:"Maior pendência",value:`${maxD}d`,sub:"dias em campo",ac:C.red})
+    ),
+    h("div",{style:{display:"flex",borderBottom:`1px solid ${C.border}`}},
+      h(TabBtn,{active:tab==="barris",color:C.amber,onClick:()=>setTab("barris")},"🍺  Barris"),
+      h(TabBtn,{active:tab==="materiais",color:C.blue,onClick:()=>setTab("materiais")},"🔧  Materiais auxiliares")
+    ),
+    tab==="barris"&&h("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+        h(Card,{title:"Barris por tamanho"},
+          h(ResponsiveContainer,{width:"100%",height:160},
+            h(BarChart,{data:tamData},
+              h(CartesianGrid,{strokeDasharray:"3 3",stroke:C.border}),
+              h(XAxis,{dataKey:"n",tick:{fontSize:11,fill:C.sub},axisLine:false,tickLine:false}),
+              h(YAxis,{tick:{fontSize:10,fill:C.sub},axisLine:false,tickLine:false}),
+              h(Tooltip,{contentStyle:tt,formatter:v=>[v,"Qtd"]}),
+              h(Bar,{dataKey:"q",name:"Qtd",fill:C.amber,radius:[4,4,0,0]})
+            )
+          )
+        ),
+        h(Card,{title:"Clientes com risco (>20d)"},
+          h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+            D.bar.filter(b=>b.d>20).sort((a,b)=>b.d-a.d).map((b,i)=>
+              h("div",{key:i,style:{display:"flex",alignItems:"center",gap:9,padding:"8px 0",borderBottom:`1px solid ${C.border}`}},
+                h(Bdg,{status:stDias(b.d)}),
+                h("span",{style:{flex:1,fontSize:13}},b.cl),
+                h("span",{style:{fontSize:11,color:C.dim}},`${b.q}× ${b.tam}`),
+                h("span",{style:{fontSize:13,fontFamily:"'JetBrains Mono',monospace",fontWeight:500,color:b.d>30?C.red:C.amber}},`${b.d}d`)
+              )
+            )
+          )
+        )
+      ),
+      h(Card,{title:"Todos os barris em campo"},
+        h("div",{style:{overflowX:"auto"}},
+          h("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:440}},
+            h("thead",null,h("tr",null,h(TH,{c:"Cliente"}),h(TH,{c:"Tamanho"}),h(TH,{c:"Qtd"}),h(TH,{c:"Dias em campo"}),h(TH,{c:"Status"}))),
+            h("tbody",null,barS.map((b,i)=>
+              h("tr",{key:i,style:{background:i%2===0?"transparent":C.surf}},
+                h(TD,{c:b.cl}),h(TD,{c:b.tam,mo:true,ac:C.sub}),h(TD,{c:b.q,mo:true}),
+                h(TD,{c:`${b.d}d`,mo:true,ac:b.d>30?C.red:b.d>20?C.amber:C.green}),
+                h("td",{style:{padding:"10px 12px"}},h(Bdg,{status:stDias(b.d)}))
+              )
+            ))
+          )
+        )
+      )
+    ),
+    tab==="materiais"&&h("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+        h(Card,{title:"Materiais por tipo"},
+          h(ResponsiveContainer,{width:"100%",height:160},
+            h(BarChart,{data:matData},
+              h(CartesianGrid,{strokeDasharray:"3 3",stroke:C.border}),
+              h(XAxis,{dataKey:"n",tick:{fontSize:11,fill:C.sub},axisLine:false,tickLine:false}),
+              h(YAxis,{tick:{fontSize:10,fill:C.sub},axisLine:false,tickLine:false}),
+              h(Tooltip,{contentStyle:tt,formatter:v=>[v,"Qtd"]}),
+              h(Bar,{dataKey:"q",name:"Qtd",fill:C.blue,radius:[4,4,0,0]})
+            )
+          )
+        ),
+        h(Card,{title:"Pendências (>20 dias)"},
+          h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+            D.mat.filter(m=>m.d>20).sort((a,b)=>b.d-a.d).map((m,i)=>
+              h("div",{key:i,style:{display:"flex",alignItems:"center",gap:9,padding:"8px 0",borderBottom:`1px solid ${C.border}`}},
+                h(Bdg,{status:stDias(m.d)}),
+                h("span",{style:{flex:1,fontSize:13}},`${m.cl} `,h("span",{style:{color:C.dim,fontSize:11}},m.mat)),
+                h("span",{style:{fontSize:13,fontFamily:"'JetBrains Mono',monospace",fontWeight:500,color:m.d>30?C.red:C.amber}},`${m.d}d`)
+              )
+            )
+          )
+        )
+      ),
+      h(Card,{title:"Todos os materiais em campo"},
+        h("div",{style:{overflowX:"auto"}},
+          h("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:440}},
+            h("thead",null,h("tr",null,h(TH,{c:"Cliente"}),h(TH,{c:"Material"}),h(TH,{c:"Qtd"}),h(TH,{c:"Dias em campo"}),h(TH,{c:"Status"}))),
+            h("tbody",null,matS.map((m,i)=>
+              h("tr",{key:i,style:{background:i%2===0?"transparent":C.surf}},
+                h(TD,{c:m.cl}),h(TD,{c:m.mat,ac:C.sub}),h(TD,{c:m.q,mo:true}),
+                h(TD,{c:`${m.d}d`,mo:true,ac:m.d>30?C.red:m.d>20?C.amber:C.green}),
+                h("td",{style:{padding:"10px 12px"}},h(Bdg,{status:stDias(m.d)}))
+              )
+            ))
+          )
+        )
+      )
+    )
+  );
+}
+
+/* ─── View: Frota ───────────────────────────────────────────── */
+function Frota({D}){
+  const totKm=D.frota.reduce((s,v)=>s+v.km,0);
+  const totCusto=D.frota.reduce((s,v)=>s+v.custo,0);
+  const totEnt=D.frota.reduce((s,v)=>s+v.ent,0);
+  const consMed=(D.frota.reduce((s,v)=>s+v.cons,0)/D.frota.length).toFixed(1);
+  const pct=D.tanque.atual/D.tanque.cap;
+  const nivelC=pct<0.3?C.red:pct<0.5?C.amber:C.green;
+  const r=40,circ=2*Math.PI*r,dash=pct*circ;
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+    h("div",{style:{display:"flex",gap:12}},
+      h(Kpi,{label:"KM (mês)",value:totKm.toLocaleString("pt-BR"),sub:`${D.frota.length} veículos`,ac:C.amber}),
+      h(Kpi,{label:"Custo combustível",value:R$(totCusto),sub:"mês atual"}),
+      h(Kpi,{label:"Entregas",value:totEnt,sub:"mês atual"}),
+      h(Kpi,{label:"Consumo médio",value:`${consMed} km/L`,sub:"frota geral"})
+    ),
+    h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+      h(Card,{title:"Tanque de diesel"},
+        h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:12,padding:"6px 0"}},
+          h("svg",{viewBox:"0 0 100 100",width:140,height:140,"aria-label":`Tanque ${Math.round(pct*100)}% cheio`},
+            h("circle",{cx:50,cy:50,r:r,fill:"none",stroke:C.border2,strokeWidth:10}),
+            h("circle",{cx:50,cy:50,r:r,fill:"none",stroke:nivelC,strokeWidth:10,
+              strokeDasharray:`${dash} ${circ}`,strokeLinecap:"round",transform:"rotate(-90 50 50)"}),
+            h("text",{x:50,y:46,textAnchor:"middle",fontSize:15,fontWeight:600,fill:nivelC,fontFamily:"'JetBrains Mono',monospace"},`${Math.round(pct*100)}%`),
+            h("text",{x:50,y:60,textAnchor:"middle",fontSize:8,fill:C.dim,fontFamily:"'Outfit',sans-serif"},"nível")
+          ),
+          h("div",{style:{textAlign:"center"}},
+            h("div",{style:{fontSize:14,fontFamily:"'JetBrains Mono',monospace",fontWeight:500}},`${D.tanque.atual}L restantes`),
+            h("div",{style:{fontSize:11,color:C.sub,marginTop:2}},`de ${D.tanque.cap}L total · ${R$(D.tanque.atual*D.tanque.preco)} em estoque`)
+          ),
+          pct<0.4&&h("div",{style:{display:"flex",alignItems:"center",gap:7,background:C.warnBg,border:`1px solid ${C.warnC}22`,borderRadius:7,padding:"9px 13px",width:"100%"}},
+            h("span",{style:{fontSize:14}},"⚠"),
+            h("span",{style:{fontSize:12,color:C.warnC,fontWeight:500}},"Nível baixo — providenciar abastecimento")
+          ),
+          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,width:"100%"}},
+            [["Preço/litro",R$(D.tanque.preco),C.text],["Valor em estoque",R$(D.tanque.atual*D.tanque.preco),C.amber]].map(([l,v,clr])=>
+              h("div",{key:l,style:{background:C.surf,border:`1px solid ${C.border}`,borderRadius:7,padding:"10px",textAlign:"center"}},
+                h("div",{style:{fontSize:10,color:C.dim,marginBottom:3}},l),
+                h("div",{style:{fontSize:15,fontFamily:"'JetBrains Mono',monospace",fontWeight:500,color:clr}},v)
+              )
+            )
+          )
+        )
+      ),
+      h(Card,{title:"Desempenho por veículo"},
+        h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+          D.frota.map((veh,i)=>
+            h("div",{key:i,style:{background:C.surf,border:`1px solid ${C.border}`,borderRadius:8,padding:"13px 15px"}},
+              h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:9}},
+                h("span",{style:{fontSize:13,fontWeight:500}},veh.v),
+                h("span",{style:{fontSize:11,color:C.sub}},`${veh.ent} entregas`)
+              ),
+              h("div",{style:{display:"flex",gap:16}},
+                [["KM mês",veh.km.toLocaleString("pt-BR"),C.text],["Consumo",`${veh.cons} km/L`,veh.cons<8.5?C.amber:C.green],["Custo mês",R$(veh.custo),C.text]].map(([l,val,clr])=>
+                  h("div",{key:l},
+                    h("div",{style:{fontSize:10,color:C.dim}},l),
+                    h("div",{style:{fontSize:14,fontFamily:"'JetBrains Mono',monospace",fontWeight:500,color:clr}},val)
+                  )
+                )
+              ),
+              h("div",{style:{marginTop:10,background:C.border,borderRadius:3,height:3}},
+                h("div",{style:{width:`${Math.round(veh.km/totKm*100)}%`,background:C.amber,borderRadius:3,height:3}})
+              ),
+              h("div",{style:{fontSize:10,color:C.dim,marginTop:3,textAlign:"right"}},`${Math.round(veh.km/totKm*100)}% do total km`)
+            )
+          )
+        )
+      )
+    ),
+    h(Card,{title:"Histórico de abastecimentos"},
+      h("div",{style:{overflowX:"auto"}},
+        h("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:440}},
+          h("thead",null,h("tr",null,h(TH,{c:"Data"}),h(TH,{c:"Veículo"}),h(TH,{c:"KM"}),h(TH,{c:"Litros"}),h(TH,{c:"Custo"}))),
+          h("tbody",null,D.abast.map((a,i)=>
+            h("tr",{key:i,style:{background:i%2===0?"transparent":C.surf}},
+              h(TD,{c:a.dt,ac:C.dim}),h(TD,{c:a.v}),
+              h(TD,{c:a.km.toLocaleString("pt-BR"),mo:true,ac:C.sub}),
+              h(TD,{c:`${a.l}L`,mo:true}),h(TD,{c:R$(a.c),mo:true,ac:C.amber})
+            )
+          ))
+        )
+      )
+    )
+  );
+}
+
+/* ─── Main App ──────────────────────────────────────────────── */
+const NAVS=[
+  {id:"vendas",  label:"Análise de vendas",      ac:C.amber},
+  {id:"estoque", label:"Controle de estoque",    ac:C.teal},
+  {id:"ret",     label:"Retornáveis",            ac:C.blue},
+  {id:"frota",   label:"Frota & abastecimento",  ac:"#A78BFA"}
+];
+
+function App(){
+  const[view,setView]=useState("vendas");
+  const[url,setUrl]=useState("");
+  const[cfg,setCfg]=useState(false);
+  const[data,setData]=useState(MOCK);
+  const[loading,setLoading]=useState(false);
+  const[status,setStatus]=useState("demo");
+  const nav=NAVS.find(n=>n.id===view);
+
+  async function sincronizar(){
+    if(!url.trim())return;
+    setLoading(true);
+    setStatus("carregando");
+    try{
+      /* Adapte os nomes das colunas conforme sua planilha real */
+      const abas=["Vendas","Estoque","Vasilhames","Frota","Config"];
+      const reqs=abas.map(a=>fetch(`${url.trim()}?aba=${a}`).then(r=>r.json()).catch(()=>null));
+      const[vend,est,vas,frota,cfg_]=await Promise.all(reqs);
+      /* TODO: mapear colunas reais → estrutura MOCK */
+      console.log("Dados brutos do Sheets:",{vend,est,vas,frota,cfg_});
+      setStatus("conectado");
+      alert("Dados recebidos! Verifique o console para mapear as colunas da sua planilha.");
+    }catch(e){
+      console.error(e);
+      setStatus("erro");
+    }
+    setLoading(false);
+  }
+
+  return h("div",{style:{minHeight:"100vh",display:"flex",flexDirection:"column"}},
+    /* Header */
+    h("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"12px 24px",background:C.surf,borderBottom:`1px solid ${C.border}`,position:"sticky",top:0,zIndex:10}},
+      h("div",{style:{width:30,height:30,background:C.amber,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}},"🍺"),
+      h("span",{style:{fontSize:15,fontWeight:500}},"Harden Express"),
+      h("span",{style:{fontSize:13,color:C.sub,fontWeight:300}},"Analytics"),
+      h("div",{style:{flex:1}}),
+      status==="conectado"&&h("span",{style:{fontSize:11,color:C.green,marginRight:8}},"● Sheets conectado"),
+      status==="demo"&&h("span",{style:{fontSize:11,color:C.dim,marginRight:8}},"● Dados demo"),
+      status==="erro"&&h("span",{style:{fontSize:11,color:C.red,marginRight:8}},"● Erro na conexão"),
+      h("button",{onClick:()=>setCfg(!cfg),style:{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:7,border:`1px solid ${cfg?C.amber:C.border2}`,background:cfg?C.amberBg:"transparent",color:cfg?C.amber:C.sub,fontSize:12,fontFamily:"'Outfit',sans-serif",cursor:"pointer"}},"⚙ Conectar Sheets")
+    ),
+    /* Settings */
+    cfg&&h("div",{style:{padding:"12px 24px",background:"#0D1020",borderBottom:`1px solid ${C.border}`,display:"flex",gap:10,alignItems:"center"}},
+      h("span",{style:{fontSize:12,color:C.sub,whiteSpace:"nowrap"}},"URL do Apps Script:"),
+      h("input",{value:url,onChange:e=>setUrl(e.target.value),placeholder:"https://script.google.com/macros/s/SEU_ID/exec",style:{flex:1}}),
+      h("button",{onClick:sincronizar,disabled:loading,style:{padding:"7px 16px",background:loading?"#333":C.amber,border:"none",borderRadius:7,color:"#412402",fontWeight:600,fontSize:12,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Outfit',sans-serif"}},loading?"Carregando...":"Sincronizar")
+    ),
+    /* Tabs */
+    h("div",{style:{display:"flex",background:C.card,borderBottom:`1px solid ${C.border}`,padding:"0 24px",overflowX:"auto"}},
+      NAVS.map(n=>h("button",{key:n.id,onClick:()=>setView(n.id),style:{
+        padding:"12px 18px",border:"none",background:"transparent",cursor:"pointer",
+        borderBottom:view===n.id?`2px solid ${n.ac}`:"2px solid transparent",
+        color:view===n.id?C.text:C.sub,fontWeight:view===n.id?500:400,
+        fontSize:13,fontFamily:"'Outfit',sans-serif",whiteSpace:"nowrap",marginBottom:-1
+      }},n.label))
+    ),
+    /* Content */
+    h("div",{style:{flex:1,padding:"22px 24px",maxWidth:1200,width:"100%",margin:"0 auto"}},
+      view==="vendas" &&h(Vendas,{D:data}),
+      view==="estoque"&&h(Estoque,{D:data}),
+      view==="ret"    &&h(Retornaveis,{D:data}),
+      view==="frota"  &&h(Frota,{D:data})
+    ),
+    h("div",{style:{padding:"14px 24px",textAlign:"center",fontSize:11,color:C.border2,borderTop:`1px solid ${C.border}`}},"Harden Express Analytics · harden.com.br")
+  );
+}
+
+ReactDOM.render(h(App,null),document.getElementById("root"));
+</script>
+</body>
+</html>
