@@ -818,7 +818,7 @@ function renderVendas(vnd){
   document.getElementById('vndCliMeta').textContent=cliArr.length+' clientes';
   document.getElementById('rankingCli').innerHTML=cliArr.length
     ?cliArr.map((c,i)=>`<div class="ranking-item">
-      <span class="rank-num ${i<3?'top'}">${i+1}</span>
+      <span class="rank-num ${i<3?'top':''}">${i+1}</span>
       <div class="rank-info">
         <div class="rank-name">${c.nome}</div>
         <div class="rank-sub">
@@ -845,7 +845,7 @@ function renderVendas(vnd){
   document.getElementById('vndProdMeta').textContent=prodArr.length+' SKUs';
   document.getElementById('rankingProd').innerHTML=prodArr.length
     ?prodArr.map((p,i)=>`<div class="ranking-item">
-      <span class="rank-num ${i<3?'top'}">${i+1}</span>
+      <span class="rank-num ${i<3?'top':''}">${i+1}</span>
       <div class="rank-info">
         <div class="rank-name">${p.nome}</div>
         <div class="rank-sub td-mono" style="font-size:10px">${p.sku} · ${fmtN(p.vol)} un</div>
@@ -922,7 +922,7 @@ function renderRetornaveis(movRet,vasPos){
   document.getElementById('retCliMeta').textContent=sorted.length+' clientes';
   document.getElementById('rankingRetCli').innerHTML=sorted.slice(0,10).map((c,i)=>`
     <div class="ranking-item">
-      <span class="rank-num ${i<3?'top'}">${i+1}</span>
+      <span class="rank-num ${i<3?'top':''}">${i+1}</span>
       <div class="rank-info">
         <div class="rank-name">${c.nome}</div>
         <div class="rank-sub">
