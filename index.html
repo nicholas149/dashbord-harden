@@ -13,213 +13,117 @@
   --bg:#F5F5F3;--surface:#FFFFFF;--surface2:#FAFAF9;
   --border:#E5E4E0;--border2:#D0CFC9;
   --tx:#1C1C1A;--tx2:#6B6B66;--tx3:#A8A8A2;
-  --amber:#C47F17;--amber-bg:#FEF3C7;--amber-border:#FCD34D;
+  --amber:#C47F17;--amber-bg:#FEF3C7;
   --green:#16A34A;--green-bg:#DCFCE7;
   --red:#DC2626;--red-bg:#FEE2E2;
   --blue:#2563EB;--blue-bg:#DBEAFE;
-  --master:#2563EB;--master-bg:#EFF6FF;
   --wine:#7C3AED;--wine-bg:#F5F3FF;
   --r:8px;--r2:12px;
   --mono:'IBM Plex Mono',monospace;
   --sans:'Figtree',sans-serif;
   --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
-  --shadow2:0 4px 6px rgba(0,0,0,0.06),0 2px 4px rgba(0,0,0,0.04);
 }
-
 html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14px;line-height:1.5}
-
-/* ─── SHELL ─── */
 .app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
-/* ─── HEADER ─── */
-.header{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:0 24px;display:flex;align-items:center;gap:0;
-  height:54px;flex-shrink:0;box-shadow:var(--shadow)
-}
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:54px;flex-shrink:0;box-shadow:var(--shadow);gap:0}
 .brand{display:flex;align-items:center;gap:10px;margin-right:32px}
-.brand-dot{
-  width:28px;height:28px;background:var(--amber);border-radius:7px;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0
-}
+.brand-dot{width:28px;height:28px;background:var(--amber);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .brand-dot svg{width:16px;height:16px;fill:white}
-.brand-name{font-size:15px;font-weight:600;color:var(--tx);letter-spacing:-0.2px}
+.brand-name{font-size:15px;font-weight:600;letter-spacing:-0.2px}
 .brand-tag{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:1px;margin-top:1px}
-
 .tabs{display:flex;gap:2px;height:100%}
-.tab-btn{
-  display:flex;align-items:center;gap:7px;
-  padding:0 16px;height:100%;border:none;background:transparent;
-  font-family:var(--sans);font-size:13px;font-weight:400;color:var(--tx2);
-  cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;
-  position:relative
-}
+.tab-btn{display:flex;align-items:center;gap:7px;padding:0 16px;height:100%;border:none;background:transparent;font-family:var(--sans);font-size:13px;font-weight:400;color:var(--tx2);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s}
 .tab-btn:hover{color:var(--tx);background:var(--bg)}
 .tab-btn.active{color:var(--amber);font-weight:600;border-bottom-color:var(--amber)}
 .tab-icon{width:15px;height:15px;flex-shrink:0;opacity:0.6}
 .tab-btn.active .tab-icon{opacity:1}
-
-.header-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.seg{
-  display:flex;background:var(--bg);border:1px solid var(--border);
-  border-radius:var(--r);padding:3px;gap:2px
-}
-.seg-btn{
-  padding:4px 10px;border-radius:5px;font-size:12px;font-weight:400;
-  cursor:pointer;color:var(--tx2);border:none;background:transparent;
-  font-family:var(--sans);transition:all 0.12s
-}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.seg{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:3px;gap:2px}
+.seg-btn{padding:4px 10px;border-radius:5px;font-size:12px;font-weight:400;cursor:pointer;color:var(--tx2);border:none;background:transparent;font-family:var(--sans);transition:all 0.12s}
 .seg-btn:hover{color:var(--tx)}
 .seg-btn.active{background:white;color:var(--tx);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,0.08)}
-.btn-api{
-  padding:6px 12px;border-radius:var(--r);border:1px solid var(--border);
-  background:var(--surface);font-family:var(--sans);font-size:12px;
-  color:var(--tx2);cursor:pointer;display:flex;align-items:center;gap:6px;
-  transition:all 0.12s
-}
-.btn-api:hover{border-color:var(--border2);color:var(--tx)}
-.api-dot{width:6px;height:6px;border-radius:50%;background:var(--tx3)}
-.api-dot.ok{background:var(--green)}
-.api-dot.demo{background:var(--amber)}
+.status-pill{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);font-family:var(--mono);font-size:10px;color:var(--tx3)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--tx3)}
+.status-dot.ok{background:var(--green)}
+.status-dot.loading{background:var(--amber);animation:pulse 1s infinite}
+.status-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 
-/* ─── FILTER BAR ─── */
-.filterbar{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:10px 24px;display:flex;align-items:center;gap:10px;
-  flex-wrap:wrap;flex-shrink:0
-}
+/* FILTER BAR */
+.filterbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
 .filter-group{display:flex;align-items:center;gap:6px}
-.filter-label{
-  font-family:var(--mono);font-size:10px;color:var(--tx3);
-  letter-spacing:0.5px;white-space:nowrap
-}
-.filter-input{
-  height:32px;padding:0 10px;
-  border:1px solid var(--border);border-radius:var(--r);
-  background:var(--bg);font-family:var(--sans);font-size:13px;
-  color:var(--tx);outline:none;transition:border-color 0.12s;
-  min-width:0
-}
+.filter-label{font-family:var(--mono);font-size:10px;color:var(--tx3);letter-spacing:0.5px;white-space:nowrap}
+.filter-input{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);font-family:var(--sans);font-size:13px;color:var(--tx);outline:none;transition:border-color 0.12s;min-width:0}
 .filter-input:focus{border-color:var(--border2);background:var(--surface)}
 .filter-input::placeholder{color:var(--tx3)}
 input[type="date"].filter-input{min-width:130px;font-family:var(--mono);font-size:12px}
-select.filter-input{min-width:110px;cursor:pointer;appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%23999' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 8px center;padding-right:28px}
+select.filter-input{min-width:110px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%23999' stroke-width='1.5'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:28px}
 .filter-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
-.filter-clear{
-  height:32px;padding:0 12px;border-radius:var(--r);
-  border:1px solid var(--border);background:transparent;
-  font-family:var(--sans);font-size:12px;color:var(--tx3);
-  cursor:pointer;transition:all 0.12s;white-space:nowrap
-}
+.filter-clear{height:32px;padding:0 12px;border-radius:var(--r);border:1px solid var(--border);background:transparent;font-family:var(--sans);font-size:12px;color:var(--tx3);cursor:pointer;transition:all 0.12s;white-space:nowrap}
 .filter-clear:hover{border-color:var(--red);color:var(--red)}
-.filter-result{
-  margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--tx3)
-}
+.filter-result{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--tx3)}
 
-/* ─── CONTENT ─── */
+/* CONTENT */
 .content{flex:1;overflow-y:auto;padding:20px 24px}
 .page{display:none}
 .page.active{display:flex;flex-direction:column;gap:16px}
 
-/* ─── KPI ROW ─── */
+/* KPIs */
 .kpi-row{display:grid;gap:12px}
 .kpi-row.c4{grid-template-columns:repeat(4,1fr)}
 .kpi-row.c3{grid-template-columns:repeat(3,1fr)}
-
-.kpi{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r2);padding:18px 20px;
-  box-shadow:var(--shadow);position:relative;overflow:hidden
-}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
 .kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
-.kpi-label{font-size:12px;font-weight:500;color:var(--tx2);letter-spacing:-0.1px}
-.kpi-icon{
-  width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center
-}
+.kpi-label{font-size:12px;font-weight:500;color:var(--tx2)}
+.kpi-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
 .kpi-icon svg{width:16px;height:16px}
-.kpi-icon.amber{background:var(--amber-bg)}
-.kpi-icon.amber svg{stroke:var(--amber)}
-.kpi-icon.green{background:var(--green-bg)}
-.kpi-icon.green svg{stroke:var(--green)}
-.kpi-icon.red{background:var(--red-bg)}
-.kpi-icon.red svg{stroke:var(--red)}
-.kpi-icon.blue{background:var(--blue-bg)}
-.kpi-icon.blue svg{stroke:var(--blue)}
-.kpi-val{
-  font-family:var(--mono);font-size:28px;font-weight:600;
-  color:var(--tx);line-height:1;margin-bottom:6px;letter-spacing:-1px
-}
-.kpi-sub{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:6px}
-.delta{
-  display:inline-flex;align-items:center;gap:2px;
-  font-family:var(--mono);font-size:10px;font-weight:600;
-  padding:2px 6px;border-radius:4px
-}
-.delta.up{background:var(--green-bg);color:var(--green)}
-.delta.dn{background:var(--red-bg);color:var(--red)}
+.kpi-icon.amber{background:var(--amber-bg)}.kpi-icon.amber svg{stroke:var(--amber)}
+.kpi-icon.green{background:var(--green-bg)}.kpi-icon.green svg{stroke:var(--green)}
+.kpi-icon.red{background:var(--red-bg)}.kpi-icon.red svg{stroke:var(--red)}
+.kpi-icon.blue{background:var(--blue-bg)}.kpi-icon.blue svg{stroke:var(--blue)}
+.kpi-val{font-family:var(--mono);font-size:28px;font-weight:600;color:var(--tx);line-height:1;margin-bottom:6px;letter-spacing:-1px}
+.kpi-sub{font-size:11px;color:var(--tx3)}
 
-/* ─── TWO COL ─── */
+/* LAYOUTS */
 .row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .row-21{display:grid;grid-template-columns:2fr 1fr;gap:14px}
-.row-12{display:grid;grid-template-columns:1fr 2fr;gap:14px}
 
-/* ─── CARD ─── */
-.card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r2);box-shadow:var(--shadow);overflow:hidden
-}
-.card-hdr{
-  padding:14px 18px 12px;
-  display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid var(--border)
-}
-.card-title{font-size:13px;font-weight:600;color:var(--tx);letter-spacing:-0.1px}
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--shadow);overflow:hidden}
+.card-hdr{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:600;color:var(--tx)}
 .card-meta{font-family:var(--mono);font-size:10px;color:var(--tx3)}
 .card-body{padding:16px 18px}
-
-/* ─── CHART ─── */
 .chart-wrap{position:relative}
 .chart-wrap.h220{height:220px}
 .chart-wrap.h200{height:200px}
 .chart-wrap.h180{height:180px}
 .chart-wrap.h160{height:160px}
 
-/* ─── RANKING ─── */
-.ranking-list{display:flex;flex-direction:column;gap:0}
-.ranking-item{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;border-bottom:1px solid var(--border)
-}
+/* RANKING */
+.ranking-list{display:flex;flex-direction:column}
+.ranking-item{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border)}
 .ranking-item:last-child{border-bottom:none}
-.rank-num{
-  font-family:var(--mono);font-size:11px;font-weight:600;
-  color:var(--tx3);min-width:18px;text-align:right
-}
+.rank-num{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--tx3);min-width:18px;text-align:right}
 .rank-num.top{color:var(--amber);font-weight:700}
 .rank-info{flex:1;min-width:0}
-.rank-name{font-size:13px;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank-sub{font-size:11px;color:var(--tx3);margin-top:1px}
 .rank-bar-wrap{flex:1;min-width:60px;max-width:120px}
 .rank-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px}
 .rank-bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
-.rank-val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tx);min-width:70px;text-align:right}
+.rank-val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tx);min-width:80px;text-align:right}
 .rank-pct{font-family:var(--mono);font-size:10px;color:var(--tx3);min-width:36px;text-align:right}
 
-/* ─── TABLE ─── */
+/* TABLE */
 .tbl-wrap{overflow:auto}
 .tbl-wrap.h360{max-height:360px}
-.tbl-wrap.h300{max-height:300px}
-.tbl-wrap.h280{max-height:280px}
+.tbl-wrap.h320{max-height:320px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead{position:sticky;top:0;z-index:2}
-th{
-  padding:9px 14px;text-align:left;background:var(--surface2);
-  font-family:var(--mono);font-size:10px;letter-spacing:0.4px;
-  color:var(--tx3);font-weight:500;white-space:nowrap;
-  border-bottom:1px solid var(--border)
-}
+th{padding:9px 14px;text-align:left;background:var(--surface2);font-family:var(--mono);font-size:10px;letter-spacing:0.4px;color:var(--tx3);font-weight:500;white-space:nowrap;border-bottom:1px solid var(--border)}
 td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--tx);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#FAFAF8}
@@ -230,13 +134,8 @@ tr:hover td{background:#FAFAF8}
 .td-green{font-family:var(--mono);font-weight:600;color:var(--green)}
 .td-red{font-family:var(--mono);font-weight:600;color:var(--red)}
 
-/* ─── PILLS / BADGES ─── */
-.pill{
-  display:inline-flex;align-items:center;
-  padding:2px 8px;border-radius:4px;
-  font-family:var(--mono);font-size:10px;font-weight:500;
-  white-space:nowrap;letter-spacing:0.2px
-}
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:500;white-space:nowrap}
 .pill-ok{background:var(--green-bg);color:#15803D}
 .pill-warn{background:var(--amber-bg);color:#92400E}
 .pill-crit{background:var(--red-bg);color:#991B1B}
@@ -245,13 +144,10 @@ tr:hover td{background:#FAFAF8}
 .pill-gray{background:#F3F3F1;color:var(--tx2)}
 .pill-dist{background:#EFF6FF;color:#1D4ED8}
 .pill-pdv{background:#F0FDF4;color:#166534}
-.pill-mov{background:#FFF7ED;color:#C2410C}
 
-/* ─── AGING BANDS ─── */
-.aging-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:0}
-.aging-band{
-  border-radius:var(--r);padding:14px;border:1px solid;
-}
+/* AGING */
+.aging-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.aging-band{border-radius:var(--r);padding:14px;border:1px solid}
 .aging-band.ok{background:#F0FDF4;border-color:#BBF7D0}
 .aging-band.warn{background:#FFFBEB;border-color:#FDE68A}
 .aging-band.crit{background:#FEF2F2;border-color:#FECACA}
@@ -265,66 +161,52 @@ tr:hover td{background:#FAFAF8}
 .aging-band.crit .aging-count{color:var(--red)}
 .aging-sub{font-size:11px;color:var(--tx3)}
 
-/* ─── COVERAGE BAR ─── */
+/* COV */
 .cov-cell{min-width:120px}
 .cov-row{display:flex;align-items:center;gap:6px}
 .cov-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
 .cov-fill{height:100%;border-radius:3px}
 .cov-val{font-family:var(--mono);font-size:11px;min-width:26px;text-align:right}
 
-/* ─── MODAL ─── */
-.modal-backdrop{
-  position:fixed;inset:0;background:rgba(0,0,0,0.3);
-  display:flex;align-items:center;justify-content:center;z-index:100;
-  display:none;backdrop-filter:blur(2px)
-}
-.modal-backdrop.open{display:flex}
-.modal{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r2);padding:24px;width:460px;
-  box-shadow:var(--shadow2)
-}
-.modal-title{font-size:16px;font-weight:600;margin-bottom:4px}
-.modal-sub{font-size:13px;color:var(--tx2);margin-bottom:20px;line-height:1.5}
-.modal-field{margin-bottom:14px}
-.modal-lbl{font-family:var(--mono);font-size:10px;color:var(--tx3);letter-spacing:0.5px;margin-bottom:5px}
-.modal-input{
-  width:100%;height:36px;padding:0 12px;
-  border:1px solid var(--border);border-radius:var(--r);
-  background:var(--bg);font-family:var(--mono);font-size:12px;color:var(--tx);outline:none
-}
-.modal-input:focus{border-color:var(--amber)}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
-.btn{
-  height:36px;padding:0 16px;border-radius:var(--r);
-  font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid;
-  transition:all 0.12s;display:inline-flex;align-items:center;gap:6px
-}
-.btn-primary{background:var(--amber);border-color:var(--amber);color:white}
-.btn-primary:hover{filter:brightness(0.95)}
-.btn-ghost{background:transparent;border-color:var(--border);color:var(--tx2)}
-.btn-ghost:hover{border-color:var(--border2);color:var(--tx)}
+/* LOADING */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:200}
+.loading-screen.hidden{display:none}
+.loading-logo{width:48px;height:48px;background:var(--amber);border-radius:14px;display:flex;align-items:center;justify-content:center}
+.loading-logo svg{width:28px;height:28px;fill:white}
+.loading-title{font-size:16px;font-weight:600;color:var(--tx)}
+.loading-sub{font-size:13px;color:var(--tx3);font-family:var(--mono)}
+.loading-bar{width:200px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px}
+.loading-bar-fill{height:100%;background:var(--amber);border-radius:2px;animation:loadprog 2s ease-in-out infinite}
+@keyframes loadprog{0%{width:0%}60%{width:80%}100%{width:95%}}
 
-/* ─── EMPTY ─── */
-.empty-state{padding:32px;text-align:center}
-.empty-state svg{width:28px;height:28px;stroke:var(--tx3);margin-bottom:8px}
-.empty-state p{font-size:13px;color:var(--tx3)}
+/* EMPTY */
+.empty-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:40px;text-align:center;box-shadow:var(--shadow)}
+.empty-card svg{width:32px;height:32px;stroke:var(--tx3);margin-bottom:12px}
+.empty-card h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty-card p{font-size:13px;color:var(--tx3);line-height:1.6;max-width:400px;margin:0 auto}
 
-/* ─── SCROLLBAR ─── */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--tx3)}
-
-/* ─── RESPONSIVE ─── */
-@media(max-width:1024px){.row-21,.row-12{grid-template-columns:1fr}.kpi-row.c4{grid-template-columns:1fr 1fr}}
-@media(max-width:768px){.row-2{grid-template-columns:1fr}.kpi-row.c4,.kpi-row.c3{grid-template-columns:1fr 1fr}.filterbar{gap:6px}}
+@media(max-width:1100px){.row-21{grid-template-columns:1fr}.kpi-row.c4{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.row-2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="app">
 
-<!-- ═══ HEADER ═══ -->
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">
+    <svg viewBox="0 0 24 24"><path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm0 3c.9 0 1.8.15 2.6.45L5.45 14.6A7 7 0 0 1 5 12c0-3.9 3.1-7 7-7zm0 12c-.9 0-1.8-.15-2.6-.45l9.15-9.15A7 7 0 0 1 19 12c0 3.9-3.1 7-7 7z"/></svg>
+  </div>
+  <div class="loading-title">Harden ERP</div>
+  <div class="loading-sub" id="loadingMsg">Carregando dados da planilha...</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+<!-- HEADER -->
 <header class="header">
   <div class="brand">
     <div class="brand-dot">
@@ -335,16 +217,13 @@ tr:hover td{background:#FAFAF8}
 
   <div class="tabs">
     <button class="tab-btn active" onclick="setTab('vendas')">
-      <svg class="tab-icon" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,12 5,7 9,9 14,3"/></svg>
-      Vendas
+      <svg class="tab-icon" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,12 5,7 9,9 14,3"/></svg>Vendas
     </button>
     <button class="tab-btn" onclick="setTab('retornaveis')">
-      <svg class="tab-icon" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7.5a5.5 5.5 0 1 0 5.5-5.5"/><polyline points="2,3.5 2,7.5 6,7.5"/></svg>
-      Retornáveis
+      <svg class="tab-icon" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7.5a5.5 5.5 0 1 0 5.5-5.5"/><polyline points="2,3.5 2,7.5 6,7.5"/></svg>Retornáveis
     </button>
     <button class="tab-btn" onclick="setTab('estoque')">
-      <svg class="tab-icon" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="11" height="11" rx="1.5"/><line x1="2" y1="7.5" x2="13" y2="7.5"/><line x1="7.5" y1="2" x2="7.5" y2="13"/></svg>
-      Estoque
+      <svg class="tab-icon" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="11" height="11" rx="1.5"/><line x1="2" y1="7.5" x2="13" y2="7.5"/><line x1="7.5" y1="2" x2="7.5" y2="13"/></svg>Estoque
     </button>
   </div>
 
@@ -354,15 +233,15 @@ tr:hover td{background:#FAFAF8}
       <button class="seg-btn" onclick="setEmp('master')">Master</button>
       <button class="seg-btn" onclick="setEmp('wine')">Wine</button>
     </div>
-    <button class="btn-api" onclick="openModal()">
-      <div class="api-dot demo" id="apiDot"></div>
-      <span id="apiLabel">Demo</span>
-    </button>
+    <div class="status-pill">
+      <div class="status-dot ok" id="statusDot"></div>
+      <span id="statusTxt">Conectado</span>
+    </div>
   </div>
 </header>
 
-<!-- ═══ FILTER BAR ═══ -->
-<div class="filterbar" id="filterbar">
+<!-- FILTER BAR -->
+<div class="filterbar">
   <div class="filter-group">
     <span class="filter-label">DE</span>
     <input type="date" class="filter-input" id="fDe" onchange="applyFilters()">
@@ -383,24 +262,18 @@ tr:hover td{background:#FAFAF8}
   </select>
   <select class="filter-input" id="fTipoMov" onchange="applyFilters()" style="display:none">
     <option value="">Tipo de movimento</option>
-    <option value="entrada">Entrada</option>
-    <option value="saida">Saída</option>
-    <option value="ajuste">Ajuste</option>
-    <option value="entrada_fabrica">Entrada Fábrica</option>
-    <option value="saida_fabrica">Saída Fábrica</option>
-    <option value="retorno_vasilhame">Retorno Vasilhame</option>
-    <option value="devolucao_cliente">Devolução Cliente</option>
+    <option value="Saída">Saída</option>
+    <option value="Entrada">Entrada</option>
+    <option value="Saldo Inicial">Saldo Inicial</option>
   </select>
   <button class="filter-clear" onclick="clearFilters()">✕ Limpar</button>
   <span class="filter-result" id="filterResult"></span>
 </div>
 
-<!-- ═══ CONTENT ═══ -->
+<!-- CONTENT -->
 <div class="content">
 
-  <!-- ══════════════════════════════
-       VENDAS
-  ══════════════════════════════ -->
+  <!-- VENDAS -->
   <div class="page active" id="page-vendas">
     <div class="kpi-row c4" id="kpiVnd"></div>
     <div class="row-21">
@@ -412,9 +285,7 @@ tr:hover td{background:#FAFAF8}
         <div class="card-body"><div class="chart-wrap h220"><canvas id="cVndLinha"></canvas></div></div>
       </div>
       <div class="card">
-        <div class="card-hdr">
-          <span class="card-title">Distribuidor vs PDV</span>
-        </div>
+        <div class="card-hdr"><span class="card-title">Distribuidor vs PDV</span></div>
         <div class="card-body"><div class="chart-wrap h220"><canvas id="cVndTipo"></canvas></div></div>
       </div>
     </div>
@@ -442,10 +313,10 @@ tr:hover td{background:#FAFAF8}
       <div class="tbl-wrap h360">
         <table>
           <thead><tr>
-            <th>Data</th><th>NF / Pedido</th><th>Cliente</th><th>Tipo</th>
-            <th>Produto</th><th class="td-r">Qtd</th>
-            <th class="td-r">Preço Un</th><th class="td-r">Total</th>
-            <th>Empresa</th><th>Origem</th>
+            <th>Data</th><th>Pedido</th><th>Cliente</th><th>Tipo</th>
+            <th>Produto</th><th class="td-r">Barris</th>
+            <th class="td-r">Litros</th><th class="td-r">Preço Un</th>
+            <th class="td-r">Total</th><th>Empresa</th><th>Origem</th>
           </tr></thead>
           <tbody id="tblVnd"></tbody>
         </table>
@@ -453,9 +324,7 @@ tr:hover td{background:#FAFAF8}
     </div>
   </div>
 
-  <!-- ══════════════════════════════
-       RETORNÁVEIS
-  ══════════════════════════════ -->
+  <!-- RETORNÁVEIS -->
   <div class="page" id="page-retornaveis">
     <div class="kpi-row c4" id="kpiRet"></div>
     <div class="aging-row" id="agingBands"></div>
@@ -468,7 +337,7 @@ tr:hover td{background:#FAFAF8}
         <div id="rankingRetCli" class="ranking-list"></div>
       </div>
       <div class="card">
-        <div class="card-hdr"><span class="card-title">Fluxo de retornáveis</span></div>
+        <div class="card-hdr"><span class="card-title">Fluxo — saídas vs retornos</span></div>
         <div class="card-body"><div class="chart-wrap h200"><canvas id="cRetFluxo"></canvas></div></div>
       </div>
     </div>
@@ -482,7 +351,7 @@ tr:hover td{background:#FAFAF8}
           <thead><tr>
             <th>Data</th><th>Tipo</th><th>Cliente</th>
             <th>Produto</th><th class="td-r">Qtd</th>
-            <th>Empresa</th><th class="td-r">Dias em campo</th><th>Registrado por</th>
+            <th>Empresa</th><th>Registrado por</th><th>Status</th>
           </tr></thead>
           <tbody id="tblRet"></tbody>
         </table>
@@ -490,557 +359,489 @@ tr:hover td{background:#FAFAF8}
     </div>
   </div>
 
-  <!-- ══════════════════════════════
-       ESTOQUE
-  ══════════════════════════════ -->
+  <!-- ESTOQUE -->
   <div class="page" id="page-estoque">
-    <div class="kpi-row c4" id="kpiEst"></div>
+    <div class="kpi-row c3" id="kpiEst"></div>
     <div class="row-21">
       <div class="card">
         <div class="card-hdr">
-          <span class="card-title">Posição atual — cobertura em dias</span>
+          <span class="card-title">Saldo por produto (Retornáveis)</span>
           <span class="card-meta" id="estProdMeta"></span>
         </div>
         <div id="rankingEst" class="ranking-list"></div>
       </div>
       <div class="card">
-        <div class="card-hdr"><span class="card-title">Entradas vs saídas</span></div>
+        <div class="card-hdr"><span class="card-title">Movimentações — retornáveis</span></div>
         <div class="card-body"><div class="chart-wrap h200"><canvas id="cEstFluxo"></canvas></div></div>
       </div>
     </div>
     <div class="card">
       <div class="card-hdr">
-        <span class="card-title">Histórico de movimentações — estoque</span>
+        <span class="card-title">Histórico completo de movimentações</span>
         <span class="card-meta" id="estTblMeta"></span>
       </div>
       <div class="tbl-wrap h360">
         <table>
           <thead><tr>
-            <th>Data</th><th>Tipo</th><th>Produto</th><th>SKU</th>
-            <th class="td-r">Qtd</th><th>NF / Ref</th>
-            <th>Empresa</th><th>Registrado por</th>
+            <th>Data</th><th>Tipo</th><th>Cliente</th><th>Produto</th><th>SKU</th>
+            <th class="td-r">Qtd</th><th>Empresa</th><th>Registrado por</th>
           </tr></thead>
           <tbody id="tblEst"></tbody>
         </table>
       </div>
     </div>
   </div>
-</div><!-- /content -->
-</div><!-- /app -->
 
-<!-- MODAL API -->
-<div class="modal-backdrop" id="modalBg" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="modal-title">Conectar à planilha</div>
-    <div class="modal-sub">Cole a URL de implantação do Apps Script. Enquanto não conectado, os dados são simulados para demonstração.</div>
-    <div class="modal-field">
-      <div class="modal-lbl">URL DO APPS SCRIPT (endpoint /exec)</div>
-      <input class="modal-input" type="text" id="mUrl" placeholder="https://script.google.com/macros/s/AKfycbxholHSDhAuzenkGyrBAukgqdNaJXArt5YBL-pRRELOHDC2uOHu_5M59eIawYWYytb2/exec">
-    </div>
-    <div class="modal-btns">
-      <button class="btn btn-ghost" onclick="setDemo()">Usar demonstração</button>
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="conectar()">Conectar</button>
-    </div>
-  </div>
+</div>
 </div>
 
 <script>
-// ══════════════════════════════════════
-// DEMO DATA
-// ══════════════════════════════════════
-const PRODS = [
-  {sku:'HRD-PIL-50',nome:'Harden Pilsen 50L',emp:'Master',custo:145,preco:292,giro:3.2,ret:true},
-  {sku:'HRD-PIL-30',nome:'Harden Pilsen 30L',emp:'Master',custo:95,preco:185,giro:2.8,ret:true},
-  {sku:'HRD-PIL-20',nome:'Harden Pilsen 20L',emp:'Master',custo:72,preco:145,giro:1.1,ret:true},
-  {sku:'HRD-IPA-30',nome:'Harden IPA 30L',emp:'Master',custo:108,preco:215,giro:1.6,ret:true},
-  {sku:'HRD-WEI-30',nome:'Harden Weiss 30L',emp:'Master',custo:99,preco:198,giro:0.9,ret:true},
-  {sku:'WNE-PIL-50',nome:'Winechopp Pilsen 50L',emp:'Winechopp',custo:140,preco:280,giro:2.5,ret:true},
-  {sku:'WNE-PIL-30',nome:'Winechopp Pilsen 30L',emp:'Winechopp',custo:88,preco:175,giro:1.8,ret:true},
-  {sku:'HRD-CO2-6',nome:'CO₂ Cilindro 6kg',emp:'Master',custo:40,preco:80,giro:0.4,ret:true},
-];
+const API = 'https://script.google.com/macros/s/AKfycbxholHSDhAuzenkGyrBAukgqdNaJXArt5YBL-pRRELOHDC2uOHu_5M59eIawYWYytb2/exec';
 
-const CLIENTES = [
-  {id:'CLI-001',nome:'MULTICHOPP DIST.',tipo:'Distribuidor',emp:'Master'},
-  {id:'CLI-002',nome:'REP BEER LTDA',tipo:'Distribuidor',emp:'Master'},
-  {id:'CLI-003',nome:'DISTRIBUIDORA SUL',tipo:'Distribuidor',emp:'Winechopp'},
-  {id:'CLI-004',nome:'BAR DO ZÉ',tipo:'PDV',emp:'Winechopp'},
-  {id:'CLI-005',nome:'REST. ALFA',tipo:'PDV',emp:'Master'},
-  {id:'CLI-006',nome:'CHOPERIA CENTRAL',tipo:'PDV',emp:'Winechopp'},
-  {id:'CLI-007',nome:'EVENTOS LTDA',tipo:'PDV',emp:'Master'},
-  {id:'CLI-008',nome:'BAR BOHEMIA',tipo:'PDV',emp:'Master'},
-  {id:'CLI-009',nome:'CASA DE CHOPP',tipo:'PDV',emp:'Master'},
-  {id:'CLI-010',nome:'BEER POINT SP',tipo:'PDV',emp:'Winechopp'},
-];
+const S = { emp:'todos', tab:'vendas', raw:null, filt:null, charts:{} };
 
-function gerarDemo() {
-  const ri=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-  const fdt=d=>d.toISOString().split('T')[0];
-  const hoje=new Date();
+// ── DATE UTILS ──
+// API sends dd/mm/yyyy → convert to Date
+function parseBR(d) {
+  if(!d) return null;
+  const parts = d.split('/');
+  if(parts.length !== 3) return null;
+  return new Date(+parts[2], +parts[1]-1, +parts[0]);
+}
+// dd/mm/yyyy → yyyy-mm-dd for display
+function brToISO(d) {
+  if(!d) return '';
+  const parts = d.split('/');
+  if(parts.length !== 3) return d;
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
 
-  // ESTOQUE SALDO
-  const estoquePos = PRODS.map(p=>{
-    const saldo=ri(5,90);
-    const cob=Math.round(saldo/p.giro);
-    return {sku:p.sku,nome:p.nome,emp:p.emp,saldo,custo:p.custo,valor:saldo*p.custo,cob,giro:p.giro,
-      status:cob<15?'crit':cob<30?'warn':'ok'};
-  });
+// ── LOAD ──
+async function fetchAPI(endpoint) {
+  const r = await fetch(`${API}?endpoint=${endpoint}`);
+  const data = await r.json();
+  return data.dados || [];
+}
 
-  // VASILHAME POR CLIENTE
-  const vasPos = CLIENTES.map(c=>{
-    const dias=ri(5,85);
-    const qtd50=ri(0,15),qtd30=ri(0,10),qtd20=ri(0,6);
-    return {...c,qtd50,qtd30,qtd20,total:qtd50+qtd30+qtd20,dias_max:dias,
-      risco:dias>60?'crit':dias>45?'warn':'ok'};
-  });
+async function init() {
+  setLoading('Carregando vendas...');
+  try {
+    const [vendas, retornaveis, clientes] = await Promise.all([
+      fetchAPI('vendas'),
+      fetchAPI('retornaveis'),
+      fetchAPI('clientes'),
+    ]);
 
-  // MOVIMENTAÇÕES HISTÓRICAS (90d)
-  const movs=[];
-  const tiposEst=['entrada','saida','ajuste','entrada_fabrica','saida_fabrica'];
-  const tiposRet=['retorno_vasilhame','devolucao_cliente'];
-  const registradores=['Comercial','Pátio','Fábrica','Sistema'];
+    // Build cliente tipo map from clientes
+    const cliTipoMap = {};
+    clientes.forEach(c => {
+      [c.nome_canonico, c.nome_master_bling, c.nome_wine_bling, c.nome_abrain]
+        .filter(Boolean)
+        .forEach(n => { cliTipoMap[n.toUpperCase()] = c.tipo || 'PDV'; });
+    });
 
-  for(let d=89;d>=0;d--){
-    const dt=new Date(hoje);dt.setDate(dt.getDate()-d);
-    const key=fdt(dt);
-    const n=ri(2,8);
-    for(let i=0;i<n;i++){
-      const p=PRODS[ri(0,PRODS.length-1)];
-      const c=CLIENTES[ri(0,CLIENTES.length-1)];
-      const isRet=Math.random()<0.35;
-      const tipo=isRet?tiposRet[ri(0,1)]:tiposEst[ri(0,4)];
-      const qtd=ri(1,15);
-      movs.push({
-        id:`MOV-${key.replace(/-/g,'')}-${String(Math.random()).slice(2,5)}`,
-        data:key,tipo,sku:p.sku,produto:p.nome,emp:p.emp,
-        qtd,cliente:['saida','devolucao_cliente','retorno_vasilhame'].includes(tipo)?c.nome:'',
-        cliente_tipo:c.tipo,
-        nf:['entrada','entrada_fabrica'].includes(tipo)?`NF-${ri(1000,9999)}`:'',
-        registrado_por:registradores[ri(0,3)],
-        aba:isRet?'Retornáveis':'Estoque',
-        dias_campo:isRet?ri(1,90):null,
-      });
-    }
+    // Enrich vendas with tipo
+    vendas.forEach(v => {
+      v.cliente_tipo = cliTipoMap[(v.cliente||'').toUpperCase()] || 'PDV';
+    });
+
+    S.raw = { vendas, retornaveis, cliTipoMap };
+
+    // Populate produto select
+    const skus = [...new Set([
+      ...vendas.map(v => v.sku),
+      ...retornaveis.map(r => r.sku)
+    ].filter(Boolean))].sort();
+    const sel = document.getElementById('fProduto');
+    skus.forEach(sku => {
+      const o = document.createElement('option');
+      o.value = sku; o.textContent = sku; sel.appendChild(o);
+    });
+
+    // Set default period: last 90 days
+    const hoje = new Date();
+    const de = new Date(hoje); de.setDate(de.getDate()-90);
+    document.getElementById('fDe').value = de.toISOString().split('T')[0];
+    document.getElementById('fAte').value = hoje.toISOString().split('T')[0];
+
+    setStatus('ok', 'Conectado');
+    hideLoading();
+    applyFilters();
+
+  } catch(e) {
+    console.error(e);
+    setStatus('error', 'Erro ao carregar');
+    setLoading('Erro ao conectar. Verifique a URL do Apps Script.');
   }
-
-  // VENDAS (subset de movs saída + preco)
-  const vendas=[];
-  movs.filter(m=>['saida','saida_fabrica'].includes(m.tipo)&&m.cliente).forEach(m=>{
-    const p=PRODS.find(x=>x.sku===m.sku);if(!p)return;
-    const c=CLIENTES.find(x=>x.nome===m.cliente)||CLIENTES[0];
-    vendas.push({...m,preco_unit:p.preco,total:m.qtd*p.preco,
-      nf:`NF-${ri(1000,9999)}`,origem:['Bling','ABrain','Manual'][ri(0,2)],
-      cliente_tipo:c.tipo});
-  });
-
-  return {estoquePos,vasPos,movs,vendas};
 }
 
-// ══════════════════════════════════════
-// STATE
-// ══════════════════════════════════════
-const S = {
-  apiUrl:localStorage.getItem('h3_api')||'',
-  emp:'todos',
-  tab:'vendas',
-  raw:null,
-  filt:null,
-  charts:{}
-};
+// ── FILTERS ──
+function applyFilters() {
+  if(!S.raw) return;
+  const de = document.getElementById('fDe').value;   // ISO yyyy-mm-dd
+  const ate = document.getElementById('fAte').value;
+  const cli = document.getElementById('fCliente').value.toLowerCase().trim();
+  const tipoCli = document.getElementById('fTipoCli').value;
+  const sku = document.getElementById('fProduto').value;
+  const tipoMov = document.getElementById('fTipoMov').value;
 
-// ══════════════════════════════════════
-// INIT
-// ══════════════════════════════════════
-async function init(){
-  // Set default dates: last 30 days
-  const hoje=new Date();
-  const de=new Date(hoje);de.setDate(de.getDate()-30);
-  document.getElementById('fDe').value=de.toISOString().split('T')[0];
-  document.getElementById('fAte').value=hoje.toISOString().split('T')[0];
-
-  // Populate produto filter
-  const sel=document.getElementById('fProduto');
-  PRODS.forEach(p=>{
-    const o=document.createElement('option');
-    o.value=p.sku;o.textContent=p.nome;sel.appendChild(o);
-  });
-
-  S.raw=gerarDemo();
-  setApiStatus('demo');
-  applyFilters();
-}
-
-// ══════════════════════════════════════
-// FILTERS
-// ══════════════════════════════════════
-function applyFilters(){
-  if(!S.raw)return;
-  const de=document.getElementById('fDe').value;
-  const ate=document.getElementById('fAte').value;
-  const cli=document.getElementById('fCliente').value.toLowerCase().trim();
-  const tipoCli=document.getElementById('fTipoCli').value;
-  const sku=document.getElementById('fProduto').value;
-  const tipoMov=document.getElementById('fTipoMov').value;
-
-  const inRange=d=>{
-    if(!de&&!ate)return true;
-    if(de&&d<de)return false;
-    if(ate&&d>ate)return false;
+  const inRange = d => {
+    if(!de && !ate) return true;
+    const dt = parseBR(d);
+    if(!dt) return false;
+    if(de && dt < new Date(de)) return false;
+    if(ate) {
+      const ateD = new Date(ate); ateD.setHours(23,59,59);
+      if(dt > ateD) return false;
+    }
     return true;
   };
-  const matchEmp=e=>{
-    if(S.emp==='todos')return true;
-    const em=S.emp==='master'?'Master':'Winechopp';
-    return e===em;
+  const matchEmp = e => {
+    if(S.emp === 'todos') return true;
+    const em = S.emp === 'master' ? 'Master' : 'Winechopp';
+    return (e||'') === em;
   };
 
-  // Filter vendas
-  const vendas=S.raw.vendas.filter(v=>
-    inRange(v.data)&&matchEmp(v.emp)&&
-    (!cli||v.cliente.toLowerCase().includes(cli))&&
-    (!tipoCli||v.cliente_tipo===tipoCli)&&
-    (!sku||v.sku===sku)
+  const vendas = S.raw.vendas.filter(v =>
+    inRange(v.data) && matchEmp(v.empresa) &&
+    (!cli || (v.cliente||'').toLowerCase().includes(cli)) &&
+    (!tipoCli || v.cliente_tipo === tipoCli) &&
+    (!sku || v.sku === sku)
   );
 
-  // Filter movs (retornáveis)
-  const movRet=S.raw.movs.filter(m=>
-    m.aba==='Retornáveis'&&inRange(m.data)&&matchEmp(m.emp)&&
-    (!cli||m.cliente.toLowerCase().includes(cli))&&
-    (!tipoCli||m.cliente_tipo===tipoCli)&&
-    (!sku||m.sku===sku)&&
-    (!tipoMov||m.tipo===tipoMov)
+  const retornaveis = S.raw.retornaveis.filter(r =>
+    inRange(r.data) && matchEmp(r.empresa) &&
+    (!cli || (r.destino||'').toLowerCase().includes(cli)) &&
+    (!sku || r.sku === sku) &&
+    (!tipoMov || r.tipo_mov === tipoMov)
   );
 
-  // Filter movs (estoque)
-  const movEst=S.raw.movs.filter(m=>
-    m.aba==='Estoque'&&inRange(m.data)&&matchEmp(m.emp)&&
-    (!sku||m.sku===sku)&&
-    (!tipoMov||m.tipo===tipoMov)
-  );
+  // Compute vasilhame saldo per client from ALL retornaveis (not filtered by date/tipo)
+  const allRet = S.raw.retornaveis.filter(r => matchEmp(r.empresa) && (!cli || (r.destino||'').toLowerCase().includes(cli)) && (!sku || r.sku === sku));
+  const vasMap = computeVasSaldo(allRet, S.raw.cliTipoMap);
 
-  // Filter estoque pos (by empresa only)
-  const estPos=S.raw.estoquePos.filter(e=>matchEmp(e.emp));
-
-  // Filter vasilhame by cliente
-  const vasPos=S.raw.vasPos.filter(v=>
-    matchEmp(v.emp)&&
-    (!cli||v.nome.toLowerCase().includes(cli))&&
-    (!tipoCli||v.tipo===tipoCli)
-  );
-
-  S.filt={vendas,movRet,movEst,estPos,vasPos};
+  S.filt = { vendas, retornaveis, vasMap };
+  document.getElementById('filterResult').textContent =
+    de && ate ? `${fmtDate(de)} → ${fmtDate(ate)}` : '';
   render();
-
-  // Result count
-  const periodoTxt=de&&ate?`${fmtDate(de)} → ${fmtDate(ate)}`:'';
-  document.getElementById('filterResult').textContent=periodoTxt;
 }
 
-function clearFilters(){
-  const hoje=new Date();
-  const de=new Date(hoje);de.setDate(de.getDate()-30);
-  document.getElementById('fDe').value=de.toISOString().split('T')[0];
-  document.getElementById('fAte').value=hoje.toISOString().split('T')[0];
-  document.getElementById('fCliente').value='';
-  document.getElementById('fTipoCli').value='';
-  document.getElementById('fProduto').value='';
-  document.getElementById('fTipoMov').value='';
+function computeVasSaldo(retAll, cliTipoMap) {
+  // Compute net saldo per client
+  const saldoMap = {};
+  const oldestSaida = {};
+
+  retAll.forEach(r => {
+    const cli = r.destino;
+    if(!cli) return;
+    const sku = r.sku || 'BARRIL';
+    const key = cli;
+    if(!saldoMap[key]) saldoMap[key] = { nome: cli, tipo: cliTipoMap[(cli||'').toUpperCase()]||'PDV', total: 0, skus: {} };
+    if(!saldoMap[key].skus[sku]) saldoMap[key].skus[sku] = 0;
+
+    const qtd = +(r.qtd)||0;
+    if(r.tipo_mov === 'Saída' || r.tipo_mov === 'Saldo Inicial') {
+      saldoMap[key].skus[sku] += qtd;
+      saldoMap[key].total += qtd;
+      // Track oldest saída date
+      const dt = parseBR(r.data);
+      if(dt) {
+        if(!oldestSaida[key] || dt < oldestSaida[key]) oldestSaida[key] = dt;
+      }
+    } else if(r.tipo_mov === 'Entrada') {
+      saldoMap[key].skus[sku] -= qtd;
+      saldoMap[key].total -= qtd;
+    }
+  });
+
+  // Clean negative saldos and compute dias
+  const hoje = new Date();
+  return Object.values(saldoMap)
+    .map(c => {
+      c.total = Math.max(0, c.total);
+      Object.keys(c.skus).forEach(k => { c.skus[k] = Math.max(0, c.skus[k]); });
+      const oldest = oldestSaida[c.nome];
+      c.dias = oldest ? Math.floor((hoje - oldest) / 86400000) : 0;
+      c.risco = c.dias > 60 ? 'crit' : c.dias > 45 ? 'warn' : 'ok';
+      return c;
+    })
+    .filter(c => c.total > 0)
+    .sort((a, b) => b.total - a.total);
+}
+
+function clearFilters() {
+  const hoje = new Date();
+  const de = new Date(hoje); de.setDate(de.getDate()-90);
+  document.getElementById('fDe').value = de.toISOString().split('T')[0];
+  document.getElementById('fAte').value = hoje.toISOString().split('T')[0];
+  document.getElementById('fCliente').value = '';
+  document.getElementById('fTipoCli').value = '';
+  document.getElementById('fProduto').value = '';
+  document.getElementById('fTipoMov').value = '';
   applyFilters();
 }
 
-// ══════════════════════════════════════
-// RENDER
-// ══════════════════════════════════════
-function render(){
-  const {vendas,movRet,movEst,estPos,vasPos}=S.filt;
+// ── RENDER ──
+function render() {
+  const {vendas, retornaveis, vasMap} = S.filt;
   renderVendas(vendas);
-  renderRetornaveis(movRet,vasPos);
-  renderEstoque(estPos,movEst);
+  renderRetornaveis(retornaveis, vasMap);
+  renderEstoque(S.raw.retornaveis, vasMap);
 }
 
 // ── VENDAS ──
-function renderVendas(vnd){
-  const totFat=vnd.reduce((a,v)=>a+v.total,0);
-  const totVol=vnd.reduce((a,v)=>a+v.qtd,0);
-  const tkMed=vnd.length?Math.round(totFat/vnd.length):0;
-  const nPed=new Set(vnd.map(v=>v.nf)).size||vnd.length;
+function renderVendas(vnd) {
+  const totFat = vnd.reduce((a,v) => a+(+v.valor_total||0), 0);
+  const totBarris = vnd.reduce((a,v) => a+(+v.qtd_barris||0), 0);
+  const totLitros = vnd.reduce((a,v) => a+(+v.qtd_litros||0), 0);
+  const peds = new Set(vnd.map(v=>v.pedido).filter(Boolean)).size || vnd.length;
+  const tkMed = peds > 0 ? Math.round(totFat/peds) : 0;
 
-  // KPIs
-  document.getElementById('kpiVnd').innerHTML=[
-    {l:'Faturamento',v:'R$ '+fmtMoney(totFat),icon:iconMoney(),cls:'amber'},
-    {l:'Volume vendido',v:fmtN(totVol)+' un',icon:iconBox(),cls:'blue'},
-    {l:'Ticket médio / NF',v:'R$ '+fmtMoney(tkMed),icon:iconTicket(),cls:'green'},
-    {l:'Pedidos / NFs',v:fmtN(nPed),icon:iconDoc(),cls:'blue'},
-  ].map(k=>`<div class="kpi">
-    <div class="kpi-top">
-      <span class="kpi-label">${k.l}</span>
-      <div class="kpi-icon ${k.cls}">${k.icon}</div>
-    </div>
-    <div class="kpi-val">${k.v}</div>
-  </div>`).join('');
+  document.getElementById('kpiVnd').innerHTML = [
+    {l:'Faturamento',v:'R$ '+fmtM(totFat),icon:iMoney(),cls:'amber'},
+    {l:'Volume (barris)',v:fmtN(totBarris),icon:iBox(),cls:'blue'},
+    {l:'Ticket médio / pedido',v:'R$ '+fmtM(tkMed),icon:iTicket(),cls:'green'},
+    {l:'Pedidos',v:fmtN(peds),icon:iDoc(),cls:'blue'},
+  ].map(k=>`<div class="kpi"><div class="kpi-top"><span class="kpi-label">${k.l}</span><div class="kpi-icon ${k.cls}">${k.icon}</div></div><div class="kpi-val">${k.v}</div></div>`).join('');
 
-  // Período label
-  const de=document.getElementById('fDe').value;
-  const ate=document.getElementById('fAte').value;
-  document.getElementById('vndPeriodo').textContent=
-    de&&ate?`${fmtDate(de)} → ${fmtDate(ate)}`:'';
+  const de = document.getElementById('fDe').value;
+  const ate = document.getElementById('fAte').value;
+  document.getElementById('vndPeriodo').textContent = de&&ate?`${fmtDate(de)} → ${fmtDate(ate)}`:'';
 
-  // Line chart: faturamento por dia
-  const byDay={};
-  vnd.forEach(v=>{byDay[v.data]=(byDay[v.data]||0)+v.total});
-  const dayKeys=Object.keys(byDay).sort();
-  const thinKeys=thinDates(dayKeys,20);
-  mkChart('cVndLinha','line',thinKeys,[
-    {label:'Faturamento R$',data:thinKeys.map(k=>byDay[k]||0),
-      borderColor:'#C47F17',backgroundColor:'rgba(196,127,23,0.07)',
-      tension:0.4,fill:true,pointRadius:3,pointHoverRadius:5,
-      pointBackgroundColor:'#C47F17',borderWidth:2}
+  // Line chart by day
+  const byDay = {};
+  vnd.forEach(v => {
+    const iso = brToISO(v.data);
+    byDay[iso] = (byDay[iso]||0)+(+v.valor_total||0);
+  });
+  const dayKeys = Object.keys(byDay).sort();
+  const thin = thinDates(dayKeys, 24);
+  mkChart('cVndLinha','line',thin.map(k=>fmtDate(k)),[
+    {label:'Faturamento R$',data:thin.map(k=>Math.round(byDay[k]||0)),borderColor:'#C47F17',backgroundColor:'rgba(196,127,23,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2}
   ],{money:true});
 
-  // Donut Distribuidor vs PDV
-  const distFat=vnd.filter(v=>v.cliente_tipo==='Distribuidor').reduce((a,v)=>a+v.total,0);
-  const pdvFat=vnd.filter(v=>v.cliente_tipo==='PDV').reduce((a,v)=>a+v.total,0);
+  // Donut dist vs pdv
+  const distFat = vnd.filter(v=>v.cliente_tipo==='Distribuidor').reduce((a,v)=>a+(+v.valor_total||0),0);
+  const pdvFat  = vnd.filter(v=>v.cliente_tipo==='PDV').reduce((a,v)=>a+(+v.valor_total||0),0);
   mkChart('cVndTipo','doughnut',['Distribuidor','PDV'],[
-    {data:[distFat,pdvFat],
-      backgroundColor:['#BFDBFE','#BBF7D0'],
-      borderColor:['#3B82F6','#22C55E'],borderWidth:1.5,hoverOffset:4}
+    {data:[Math.round(distFat),Math.round(pdvFat)],backgroundColor:['#BFDBFE','#BBF7D0'],borderColor:['#3B82F6','#22C55E'],borderWidth:1.5,hoverOffset:4}
   ],{money:true});
 
   // Ranking clientes
-  const byCli={};
+  const byCli = {};
   vnd.forEach(v=>{
-    if(!v.cliente)return;
-    if(!byCli[v.cliente])byCli[v.cliente]={nome:v.cliente,tipo:v.cliente_tipo,fat:0,vol:0};
-    byCli[v.cliente].fat+=v.total;byCli[v.cliente].vol+=v.qtd;
+    if(!v.cliente) return;
+    if(!byCli[v.cliente]) byCli[v.cliente]={nome:v.cliente,tipo:v.cliente_tipo,fat:0,vol:0};
+    byCli[v.cliente].fat+=(+v.valor_total||0);byCli[v.cliente].vol+=(+v.qtd_barris||0);
   });
-  const cliArr=Object.values(byCli).sort((a,b)=>b.fat-a.fat).slice(0,10);
-  const maxFat=cliArr[0]?.fat||1;
-  document.getElementById('vndCliMeta').textContent=cliArr.length+' clientes';
-  document.getElementById('rankingCli').innerHTML=cliArr.length
-    ?cliArr.map((c,i)=>`<div class="ranking-item">
-      <span class="rank-num ${i<3?'top':''}">${i+1}</span>
-      <div class="rank-info">
-        <div class="rank-name">${c.nome}</div>
-        <div class="rank-sub">
-          <span class="pill ${c.tipo==='Distribuidor'?'pill-dist':'pill-pdv'}">${c.tipo}</span>
-          &nbsp;${fmtN(c.vol)} un
+  const cliArr = Object.values(byCli).sort((a,b)=>b.fat-a.fat).slice(0,10);
+  const maxFat = cliArr[0]?.fat||1;
+  document.getElementById('vndCliMeta').textContent = cliArr.length+' clientes';
+  document.getElementById('rankingCli').innerHTML = cliArr.length
+    ? cliArr.map((c,i)=>`<div class="ranking-item">
+        <span class="rank-num ${i<3?'top':''}">${i+1}</span>
+        <div class="rank-info">
+          <div class="rank-name">${c.nome}</div>
+          <div class="rank-sub"><span class="pill ${c.tipo==='Distribuidor'?'pill-dist':'pill-pdv'}">${c.tipo||'PDV'}</span> &nbsp;${fmtN(c.vol)} barris</div>
         </div>
-      </div>
-      <div class="rank-bar-wrap">
-        <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round((c.fat/maxFat)*100)}%;background:#C47F17"></div></div>
-      </div>
-      <span class="rank-val">R$ ${fmtMoney(c.fat)}</span>
-      <span class="rank-pct">${Math.round((c.fat/totFat)*100)||0}%</span>
-    </div>`).join('')
-    :empty('Nenhuma venda no período');
+        <div class="rank-bar-wrap"><div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round((c.fat/maxFat)*100)}%;background:#C47F17"></div></div></div>
+        <span class="rank-val">R$ ${fmtM(c.fat)}</span>
+        <span class="rank-pct">${Math.round((c.fat/totFat)*100)||0}%</span>
+      </div>`).join('')
+    : emptyRow(6,'Sem vendas no período');
 
   // Ranking produtos
-  const byProd={};
+  const byProd = {};
   vnd.forEach(v=>{
-    if(!byProd[v.sku])byProd[v.sku]={sku:v.sku,nome:v.produto,fat:0,vol:0};
-    byProd[v.sku].fat+=v.total;byProd[v.sku].vol+=v.qtd;
+    if(!byProd[v.sku]) byProd[v.sku]={sku:v.sku,nome:v.produto,fat:0,vol:0};
+    byProd[v.sku].fat+=(+v.valor_total||0);byProd[v.sku].vol+=(+v.qtd_barris||0);
   });
-  const prodArr=Object.values(byProd).sort((a,b)=>b.fat-a.fat).slice(0,8);
-  const maxPFat=prodArr[0]?.fat||1;
-  document.getElementById('vndProdMeta').textContent=prodArr.length+' SKUs';
-  document.getElementById('rankingProd').innerHTML=prodArr.length
-    ?prodArr.map((p,i)=>`<div class="ranking-item">
-      <span class="rank-num ${i<3?'top':''}">${i+1}</span>
-      <div class="rank-info">
-        <div class="rank-name">${p.nome}</div>
-        <div class="rank-sub td-mono" style="font-size:10px">${p.sku} · ${fmtN(p.vol)} un</div>
-      </div>
-      <div class="rank-bar-wrap">
-        <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round((p.fat/maxPFat)*100)}%;background:#2563EB"></div></div>
-      </div>
-      <span class="rank-val">R$ ${fmtMoney(p.fat)}</span>
-      <span class="rank-pct">${Math.round((p.fat/totFat)*100)||0}%</span>
-    </div>`).join('')
-    :empty('Nenhuma venda no período');
+  const prodArr = Object.values(byProd).sort((a,b)=>b.fat-a.fat).slice(0,8);
+  const maxPFat = prodArr[0]?.fat||1;
+  document.getElementById('vndProdMeta').textContent = prodArr.length+' SKUs';
+  document.getElementById('rankingProd').innerHTML = prodArr.length
+    ? prodArr.map((p,i)=>`<div class="ranking-item">
+        <span class="rank-num ${i<3?'top':''}">${i+1}</span>
+        <div class="rank-info">
+          <div class="rank-name">${p.nome||p.sku}</div>
+          <div class="rank-sub td-mono" style="font-size:10px">${p.sku} · ${fmtN(p.vol)} barris</div>
+        </div>
+        <div class="rank-bar-wrap"><div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round((p.fat/maxPFat)*100)}%;background:#2563EB"></div></div></div>
+        <span class="rank-val">R$ ${fmtM(p.fat)}</span>
+        <span class="rank-pct">${Math.round((p.fat/totFat)*100)||0}%</span>
+      </div>`).join('')
+    : emptyRow(6,'Sem vendas no período');
 
   // Tabela
-  document.getElementById('vndTblMeta').textContent=fmtN(vnd.length)+' registros';
-  const sorted=[...vnd].sort((a,b)=>b.data.localeCompare(a.data));
-  document.getElementById('tblVnd').innerHTML=sorted.slice(0,60).map(v=>`<tr>
+  document.getElementById('vndTblMeta').textContent = fmtN(vnd.length)+' registros';
+  const sv = [...vnd].sort((a,b)=>brToISO(b.data).localeCompare(brToISO(a.data)));
+  document.getElementById('tblVnd').innerHTML = sv.slice(0,80).map(v=>`<tr>
     <td class="td-mono td-dim" style="font-size:11px">${v.data}</td>
-    <td class="td-mono" style="font-size:11px;color:var(--tx2)">${v.nf||'—'}</td>
-    <td style="font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.cliente||'—'}</td>
-    <td><span class="pill ${v.cliente_tipo==='Distribuidor'?'pill-dist':'pill-pdv'}">${v.cliente_tipo||'—'}</span></td>
-    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${v.produto||'—'}</td>
-    <td class="td-r td-mono">${v.qtd}</td>
-    <td class="td-r td-mono td-dim">R$ ${fmtN(v.preco_unit)}</td>
-    <td class="td-r td-amber">R$ ${fmtMoney(v.total)}</td>
-    <td><span class="pill ${v.emp==='Master'?'pill-blue':'pill-wine'}">${v.emp}</span></td>
-    <td class="td-dim" style="font-size:11px">${v.origem}</td>
-  </tr>`).join('')||emptyRow(10,'Sem vendas no período selecionado');
+    <td class="td-mono td-dim" style="font-size:11px">${v.pedido||'—'}</td>
+    <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.cliente||'—'}</td>
+    <td><span class="pill ${v.cliente_tipo==='Distribuidor'?'pill-dist':'pill-pdv'}">${v.cliente_tipo||'PDV'}</span></td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${v.produto||v.sku||'—'}</td>
+    <td class="td-r td-mono">${v.qtd_barris||0}</td>
+    <td class="td-r td-mono td-dim">${v.qtd_litros||0}L</td>
+    <td class="td-r td-mono td-dim">R$ ${fmtN(+v.preco_unitario||0)}</td>
+    <td class="td-r td-amber">R$ ${fmtM(+v.valor_total||0)}</td>
+    <td><span class="pill ${v.empresa==='Master'?'pill-blue':'pill-wine'}">${v.empresa||'—'}</span></td>
+    <td class="td-dim" style="font-size:11px">${v.origem||'—'}</td>
+  </tr>`).join('') || emptyRow(11,'Sem vendas no período selecionado');
 }
 
 // ── RETORNÁVEIS ──
-function renderRetornaveis(movRet,vasPos){
-  const totCampo=vasPos.reduce((a,v)=>a+v.total,0);
-  const totCD=vasPos.length>0?Math.round(totCampo*0.6):0; // CD estimado do demo
-  const atraso=vasPos.filter(v=>v.risco!=='ok').length;
+function renderRetornaveis(mov, vasMap) {
+  const totCampo = vasMap.reduce((a,c)=>a+c.total,0);
+  const totalSaidas = mov.filter(m=>m.tipo_mov==='Saída').reduce((a,m)=>a+(+m.qtd||0),0);
+  const totalEntradas = mov.filter(m=>m.tipo_mov==='Entrada').reduce((a,m)=>a+(+m.qtd||0),0);
+  const taxa = totalSaidas>0?Math.round((totalEntradas/totalSaidas)*100):0;
+  const atraso = vasMap.filter(c=>c.risco!=='ok').length;
 
-  const saidas=movRet.filter(m=>m.tipo==='devolucao_cliente').reduce((a,m)=>a+m.qtd,0);
-  const retornos=movRet.filter(m=>m.tipo==='retorno_vasilhame').reduce((a,m)=>a+m.qtd,0);
-  const taxa=saidas>0?Math.round((retornos/saidas)*100):0;
+  document.getElementById('kpiRet').innerHTML = [
+    {l:'Vasilhame em campo',v:fmtN(totCampo),icon:iField(),cls:'blue'},
+    {l:'Taxa de retorno',v:taxa+'%',icon:iReturn(),cls:taxa>60?'green':taxa>35?'amber':'red'},
+    {l:'Clientes com vasilhame',v:vasMap.length,icon:iUser(),cls:'blue'},
+    {l:'Em atraso (>45d)',v:atraso,icon:iAlert(),cls:atraso>0?'red':'green'},
+  ].map(k=>`<div class="kpi"><div class="kpi-top"><span class="kpi-label">${k.l}</span><div class="kpi-icon ${k.cls}">${k.icon}</div></div><div class="kpi-val">${k.v}</div></div>`).join('');
 
-  document.getElementById('kpiRet').innerHTML=[
-    {l:'Vasilhame em campo',v:fmtN(totCampo),icon:iconField(),cls:'blue'},
-    {l:'Taxa de retorno',v:taxa+'%',icon:iconReturn(),cls:taxa>60?'green':taxa>35?'amber':'red'},
-    {l:'Clientes com vasilhame',v:vasPos.length,icon:iconUser(),cls:'blue'},
-    {l:'Em atraso (>45d)',v:atraso,icon:iconAlert(),cls:atraso>0?'red':'green'},
-  ].map(k=>`<div class="kpi">
-    <div class="kpi-top"><span class="kpi-label">${k.l}</span><div class="kpi-icon ${k.cls}">${k.icon}</div></div>
-    <div class="kpi-val">${k.v}</div>
-  </div>`).join('');
-
-  // Aging bands
-  const ok=vasPos.filter(v=>v.risco==='ok').length;
-  const warn=vasPos.filter(v=>v.risco==='warn').length;
-  const crit=vasPos.filter(v=>v.risco==='crit').length;
-  document.getElementById('agingBands').innerHTML=`
-    <div class="aging-band ok">
-      <div class="aging-label">Em dia (< 45 dias)</div>
-      <div class="aging-count">${ok}</div>
-      <div class="aging-sub">clientes dentro do prazo</div>
-    </div>
-    <div class="aging-band warn">
-      <div class="aging-label">Atenção (45–60 dias)</div>
-      <div class="aging-count">${warn}</div>
-      <div class="aging-sub">necessita contato</div>
-    </div>
-    <div class="aging-band crit">
-      <div class="aging-label">Crítico (> 60 dias)</div>
-      <div class="aging-count">${crit}</div>
-      <div class="aging-sub">recolhimento urgente</div>
-    </div>`;
+  // Aging
+  const ok = vasMap.filter(c=>c.risco==='ok').length;
+  const warn = vasMap.filter(c=>c.risco==='warn').length;
+  const crit = vasMap.filter(c=>c.risco==='crit').length;
+  document.getElementById('agingBands').innerHTML = `
+    <div class="aging-band ok"><div class="aging-label">Em dia (< 45 dias)</div><div class="aging-count">${ok}</div><div class="aging-sub">clientes dentro do prazo</div></div>
+    <div class="aging-band warn"><div class="aging-label">Atenção (45–60 dias)</div><div class="aging-count">${warn}</div><div class="aging-sub">necessita contato</div></div>
+    <div class="aging-band crit"><div class="aging-label">Crítico (> 60 dias)</div><div class="aging-count">${crit}</div><div class="aging-sub">recolhimento urgente</div></div>`;
 
   // Ranking clientes
-  const sorted=[...vasPos].sort((a,b)=>b.total-a.total);
-  const maxVas=sorted[0]?.total||1;
-  document.getElementById('retCliMeta').textContent=sorted.length+' clientes';
-  document.getElementById('rankingRetCli').innerHTML=sorted.slice(0,10).map((c,i)=>`
+  const maxVas = vasMap[0]?.total||1;
+  document.getElementById('retCliMeta').textContent = vasMap.length+' clientes';
+  document.getElementById('rankingRetCli').innerHTML = vasMap.slice(0,12).map((c,i)=>`
     <div class="ranking-item">
       <span class="rank-num ${i<3?'top':''}">${i+1}</span>
       <div class="rank-info">
         <div class="rank-name">${c.nome}</div>
         <div class="rank-sub">
-          <span class="pill ${c.tipo==='Distribuidor'?'pill-dist':'pill-pdv'}">${c.tipo}</span>
-          &nbsp;<span style="font-family:var(--mono);font-size:10px;color:${c.risco==='crit'?'var(--red)':c.risco==='warn'?'var(--amber)':'var(--tx3)'}">${c.dias_max}d campo</span>
+          <span class="pill ${c.tipo==='Distribuidor'?'pill-dist':'pill-pdv'}">${c.tipo||'PDV'}</span>
+          &nbsp;<span style="font-family:var(--mono);font-size:10px;color:${c.risco==='crit'?'var(--red)':c.risco==='warn'?'var(--amber)':'var(--tx3)'}">${c.dias}d em campo</span>
         </div>
       </div>
-      <div class="rank-bar-wrap">
-        <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round((c.total/maxVas)*100)}%;background:${c.risco==='crit'?'#DC2626':c.risco==='warn'?'#C47F17':'#16A34A'}"></div></div>
-      </div>
-      <div style="text-align:right;min-width:80px">
+      <div class="rank-bar-wrap"><div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round((c.total/maxVas)*100)}%;background:${c.risco==='crit'?'#DC2626':c.risco==='warn'?'#C47F17':'#16A34A'}"></div></div></div>
+      <div style="text-align:right;min-width:90px">
         <div class="rank-val">${c.total} barris</div>
-        <div style="font-size:10px;color:var(--tx3);margin-top:1px">${c.qtd50}×50L ${c.qtd30}×30L ${c.qtd20}×20L</div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:1px">${Object.entries(c.skus).filter(([,v])=>v>0).map(([k,v])=>v+'×'+k).join(' ')}</div>
       </div>
       <span class="pill pill-${c.risco==='crit'?'crit':c.risco==='warn'?'warn':'ok'}">${c.risco==='crit'?'CRÍTICO':c.risco==='warn'?'ATENÇÃO':'OK'}</span>
-    </div>`).join('')||empty('Nenhum cliente no filtro');
+    </div>`).join('') || '<div style="padding:32px;text-align:center;color:var(--tx3)">Nenhum vasilhame em campo</div>';
 
   // Fluxo chart
-  const byDaySai={},byDayRet={};
-  movRet.forEach(m=>{
-    if(m.tipo==='devolucao_cliente') byDaySai[m.data]=(byDaySai[m.data]||0)+m.qtd;
-    if(m.tipo==='retorno_vasilhame') byDayRet[m.data]=(byDayRet[m.data]||0)+m.qtd;
+  const byDaySai={}, byDayEnt={};
+  mov.forEach(m=>{
+    const iso=brToISO(m.data);
+    if(m.tipo_mov==='Saída') byDaySai[iso]=(byDaySai[iso]||0)+(+m.qtd||0);
+    if(m.tipo_mov==='Entrada') byDayEnt[iso]=(byDayEnt[iso]||0)+(+m.qtd||0);
   });
-  const allDays=[...new Set([...Object.keys(byDaySai),...Object.keys(byDayRet)])].sort();
-  const thin=thinDates(allDays,16);
-  mkChart('cRetFluxo','line',thin,[
+  const allDays=[...new Set([...Object.keys(byDaySai),...Object.keys(byDayEnt)])].sort();
+  const thin=thinDates(allDays,18);
+  mkChart('cRetFluxo','line',thin.map(k=>fmtDate(k)),[
     {label:'Saídas',data:thin.map(k=>byDaySai[k]||0),borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,0.06)',tension:0.4,fill:true,pointRadius:2,borderWidth:2},
-    {label:'Retornos',data:thin.map(k=>byDayRet[k]||0),borderColor:'#16A34A',backgroundColor:'rgba(22,163,74,0.06)',tension:0.4,fill:true,pointRadius:2,borderWidth:2},
+    {label:'Retornos',data:thin.map(k=>byDayEnt[k]||0),borderColor:'#16A34A',backgroundColor:'rgba(22,163,74,0.06)',tension:0.4,fill:true,pointRadius:2,borderWidth:2},
   ]);
 
   // Tabela
-  document.getElementById('retTblMeta').textContent=fmtN(movRet.length)+' registros';
-  const sRet=[...movRet].sort((a,b)=>b.data.localeCompare(a.data));
-  document.getElementById('tblRet').innerHTML=sRet.slice(0,60).map(m=>`<tr>
+  document.getElementById('retTblMeta').textContent = fmtN(mov.length)+' registros';
+  const sr=[...mov].sort((a,b)=>brToISO(b.data).localeCompare(brToISO(a.data)));
+  document.getElementById('tblRet').innerHTML = sr.slice(0,80).map(m=>`<tr>
     <td class="td-mono td-dim" style="font-size:11px">${m.data}</td>
-    <td><span class="pill pill-mov">${m.tipo.replace(/_/g,' ')}</span></td>
-    <td style="font-weight:500">${m.cliente||'—'}</td>
-    <td style="font-size:12px">${m.produto}</td>
-    <td class="td-r td-mono">${m.qtd}</td>
-    <td><span class="pill ${m.emp==='Master'?'pill-blue':'pill-wine'}">${m.emp}</span></td>
-    <td class="td-r" style="font-family:var(--mono);font-size:12px;color:${(m.dias_campo||0)>60?'var(--red)':(m.dias_campo||0)>45?'var(--amber)':'var(--tx3)'}">${m.dias_campo!=null?m.dias_campo+'d':'—'}</td>
-    <td class="td-dim" style="font-size:11px">${m.registrado_por}</td>
-  </tr>`).join('')||emptyRow(8,'Sem movimentações no período');
+    <td><span class="pill ${m.tipo_mov==='Entrada'?'pill-ok':m.tipo_mov==='Saída'?'pill-crit':'pill-gray'}">${m.tipo_mov||'—'}</span></td>
+    <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.destino||'—'}</td>
+    <td style="font-size:12px">${m.produto||m.sku||'—'}</td>
+    <td class="td-r td-mono" style="color:${m.tipo_mov==='Entrada'?'var(--green)':m.tipo_mov==='Saída'?'var(--red)':'var(--tx)'}">${m.tipo_mov==='Entrada'?'+':m.tipo_mov==='Saída'?'−':''}${m.qtd||0}</td>
+    <td><span class="pill ${m.empresa==='Master'?'pill-blue':'pill-wine'}">${m.empresa||'—'}</span></td>
+    <td class="td-dim" style="font-size:11px">${m.registrado_por||'—'}</td>
+    <td><span class="pill ${m.status==='validado'?'pill-ok':'pill-warn'}">${m.status||'—'}</span></td>
+  </tr>`).join('') || emptyRow(8,'Sem movimentações no período');
 }
 
 // ── ESTOQUE ──
-function renderEstoque(estPos,movEst){
-  const totUnid=estPos.reduce((a,e)=>a+e.saldo,0);
-  const totValor=estPos.reduce((a,e)=>a+e.valor,0);
-  const cobMedia=estPos.length?Math.round(estPos.reduce((a,e)=>a+e.cob,0)/estPos.length):0;
-  const criticos=estPos.filter(e=>e.status==='crit').length;
+function renderEstoque(allRet, vasMap) {
+  // Compute saldo por SKU from retornáveis
+  const skuSaldo = {};
+  allRet.forEach(r=>{
+    const sku=r.sku||'BARRIL';
+    if(!skuSaldo[sku]) skuSaldo[sku]={sku,nome:r.produto||sku,cd:0,campo:0};
+    const qtd=+(r.qtd)||0;
+    if(r.tipo_mov==='Saída') skuSaldo[sku].campo+=qtd;
+    else if(r.tipo_mov==='Entrada') skuSaldo[sku].campo=Math.max(0,skuSaldo[sku].campo-qtd);
+    else if(r.tipo_mov==='Saldo Inicial') skuSaldo[sku].cd+=qtd;
+  });
+  const skuArr = Object.values(skuSaldo).sort((a,b)=>b.campo-a.campo);
+  const totCampo = skuArr.reduce((a,s)=>a+s.campo,0);
+  const totCD = skuArr.reduce((a,s)=>a+s.cd,0);
 
-  document.getElementById('kpiEst').innerHTML=[
-    {l:'Unidades em estoque',v:fmtN(totUnid),icon:iconBox(),cls:'blue'},
-    {l:'Valor do estoque',v:'R$ '+fmtMoney(totValor),icon:iconMoney(),cls:'amber'},
-    {l:'Cobertura média',v:cobMedia+'d',icon:iconCalendar(),cls:cobMedia<20?'red':cobMedia<35?'amber':'green'},
-    {l:'SKUs críticos (<15d)',v:criticos,icon:iconAlert(),cls:criticos>0?'red':'green'},
-  ].map(k=>`<div class="kpi">
-    <div class="kpi-top"><span class="kpi-label">${k.l}</span><div class="kpi-icon ${k.cls}">${k.icon}</div></div>
-    <div class="kpi-val">${k.v}</div>
-  </div>`).join('');
+  document.getElementById('kpiEst').innerHTML = [
+    {l:'Barris em campo',v:fmtN(totCampo),icon:iField(),cls:'blue'},
+    {l:'Saldo inicial (CD)',v:fmtN(totCD),icon:iBox(),cls:'green'},
+    {l:'SKUs rastreados',v:skuArr.length,icon:iAlert(),cls:'amber'},
+  ].map(k=>`<div class="kpi"><div class="kpi-top"><span class="kpi-label">${k.l}</span><div class="kpi-icon ${k.cls}">${k.icon}</div></div><div class="kpi-val">${k.v}</div></div>`).join('');
 
-  // Ranking por cobertura (mais crítico primeiro)
-  const sorted=[...estPos].sort((a,b)=>a.cob-b.cob);
-  const maxCob=Math.max(...estPos.map(e=>e.cob),60);
-  document.getElementById('estProdMeta').textContent=sorted.length+' SKUs';
-  document.getElementById('rankingEst').innerHTML=sorted.map((e,i)=>`
-    <div class="ranking-item">
+  // Ranking por SKU
+  const maxCampo=skuArr[0]?.campo||1;
+  document.getElementById('estProdMeta').textContent=skuArr.length+' SKUs';
+  document.getElementById('rankingEst').innerHTML=skuArr.map((s,i)=>{
+    const pct=Math.round((s.campo/Math.max(1,(s.campo+s.cd)))*100);
+    return `<div class="ranking-item">
       <span class="rank-num">${i+1}</span>
       <div class="rank-info">
-        <div class="rank-name">${e.nome}</div>
-        <div class="rank-sub" style="font-family:var(--mono);font-size:10px">${e.sku} · ${fmtN(e.saldo)} un · R$ ${fmtN(e.custo)}/un</div>
+        <div class="rank-name">${s.nome}</div>
+        <div class="rank-sub td-mono" style="font-size:10px">${s.sku}</div>
       </div>
       <div class="cov-cell">
         <div class="cov-row">
-          <div class="cov-bar"><div class="cov-fill" style="width:${Math.round((e.cob/maxCob)*100)}%;background:${e.status==='crit'?'#DC2626':e.status==='warn'?'#C47F17':'#16A34A'}"></div></div>
-          <span class="cov-val" style="color:${e.status==='crit'?'var(--red)':e.status==='warn'?'var(--amber)':'var(--green)'}">${e.cob}d</span>
+          <div class="cov-bar"><div class="cov-fill" style="width:${Math.round((s.campo/maxCampo)*100)}%;background:#2563EB"></div></div>
         </div>
       </div>
-      <span class="pill pill-${e.status==='crit'?'crit':e.status==='warn'?'warn':'ok'}">${e.status==='crit'?'CRÍTICO':e.status==='warn'?'BAIXO':'OK'}</span>
-      <span class="rank-val">R$ ${fmtMoney(e.valor)}</span>
-    </div>`).join('')||empty('Nenhum produto no filtro');
+      <div style="text-align:right;min-width:120px">
+        <div class="rank-val">${s.campo} campo</div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:1px">CI: ${s.cd}</div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="padding:32px;text-align:center;color:var(--tx3)">Sem dados</div>';
 
   // Fluxo chart
-  const byDayEnt={},byDaySai={};
-  movEst.forEach(m=>{
-    if(['entrada','entrada_fabrica'].includes(m.tipo))byDayEnt[m.data]=(byDayEnt[m.data]||0)+m.qtd;
-    if(['saida','saida_fabrica'].includes(m.tipo))byDaySai[m.data]=(byDaySai[m.data]||0)+m.qtd;
+  const byDayS={},byDayE={};
+  allRet.forEach(m=>{
+    const iso=brToISO(m.data);
+    if(m.tipo_mov==='Saída') byDayS[iso]=(byDayS[iso]||0)+(+m.qtd||0);
+    if(m.tipo_mov==='Entrada') byDayE[iso]=(byDayE[iso]||0)+(+m.qtd||0);
   });
-  const allD=[...new Set([...Object.keys(byDayEnt),...Object.keys(byDaySai)])].sort();
-  const th=thinDates(allD,16);
-  mkChart('cEstFluxo','line',th,[
-    {label:'Entradas',data:th.map(k=>byDayEnt[k]||0),borderColor:'#16A34A',backgroundColor:'rgba(22,163,74,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2},
-    {label:'Saídas',data:th.map(k=>byDaySai[k]||0),borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2},
+  const ad=[...new Set([...Object.keys(byDayS),...Object.keys(byDayE)])].sort();
+  const th=thinDates(ad,18);
+  mkChart('cEstFluxo','line',th.map(k=>fmtDate(k)),[
+    {label:'Saídas',data:th.map(k=>byDayS[k]||0),borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2},
+    {label:'Entradas',data:th.map(k=>byDayE[k]||0),borderColor:'#16A34A',backgroundColor:'rgba(22,163,74,0.07)',tension:0.4,fill:true,pointRadius:2,borderWidth:2},
   ]);
 
-  // Tabela
-  document.getElementById('estTblMeta').textContent=fmtN(movEst.length)+' registros';
-  const sEst=[...movEst].sort((a,b)=>b.data.localeCompare(a.data));
-  document.getElementById('tblEst').innerHTML=sEst.slice(0,60).map(m=>`<tr>
+  // Tabela completa
+  document.getElementById('estTblMeta').textContent=fmtN(allRet.length)+' registros';
+  const sRet=[...allRet].sort((a,b)=>brToISO(b.data).localeCompare(brToISO(a.data)));
+  document.getElementById('tblEst').innerHTML=sRet.slice(0,100).map(m=>`<tr>
     <td class="td-mono td-dim" style="font-size:11px">${m.data}</td>
-    <td><span class="pill pill-mov" style="background:${movColor(m.tipo)[0]};color:${movColor(m.tipo)[1]}">${m.tipo.replace(/_/g,' ')}</span></td>
-    <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.produto}</td>
-    <td class="td-mono td-dim" style="font-size:11px">${m.sku}</td>
-    <td class="td-r td-mono" style="font-weight:600;color:${['entrada','entrada_fabrica'].includes(m.tipo)?'var(--green)':'var(--red)'}">${['entrada','entrada_fabrica'].includes(m.tipo)?'+':'−'}${m.qtd}</td>
-    <td class="td-mono td-dim" style="font-size:11px">${m.nf||'—'}</td>
-    <td><span class="pill ${m.emp==='Master'?'pill-blue':'pill-wine'}">${m.emp}</span></td>
-    <td class="td-dim" style="font-size:11px">${m.registrado_por}</td>
-  </tr>`).join('')||emptyRow(8,'Sem movimentações no período');
+    <td><span class="pill ${m.tipo_mov==='Entrada'?'pill-ok':m.tipo_mov==='Saída'?'pill-crit':'pill-gray'}">${m.tipo_mov||'—'}</span></td>
+    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${m.destino||'—'}</td>
+    <td style="font-size:12px">${m.produto||'—'}</td>
+    <td class="td-mono td-dim" style="font-size:11px">${m.sku||'—'}</td>
+    <td class="td-r td-mono" style="font-weight:600;color:${m.tipo_mov==='Entrada'?'var(--green)':m.tipo_mov==='Saída'?'var(--red)':'var(--tx)'}">${m.tipo_mov==='Entrada'?'+':m.tipo_mov==='Saída'?'−':''}${m.qtd||0}</td>
+    <td><span class="pill ${m.empresa==='Master'?'pill-blue':'pill-wine'}">${m.empresa||'—'}</span></td>
+    <td class="td-dim" style="font-size:11px">${m.registrado_por||'—'}</td>
+  </tr>`).join('')||emptyRow(8,'Sem movimentações');
 }
 
-// ══════════════════════════════════════
-// CHART FACTORY
-// ══════════════════════════════════════
-function mkChart(id,type,labels,datasets,opts={}){
-  if(S.charts[id])S.charts[id].destroy();
-  const ctx=document.getElementById(id);
-  if(!ctx)return;
+// ── CHARTS ──
+function mkChart(id,type,labels,datasets,opts={}) {
+  if(S.charts[id]) S.charts[id].destroy();
+  const ctx=document.getElementById(id); if(!ctx) return;
   const isDo=type==='doughnut';
   const money=opts.money||false;
   S.charts[id]=new Chart(ctx,{
@@ -1048,134 +849,64 @@ function mkChart(id,type,labels,datasets,opts={}){
     options:{
       responsive:true,maintainAspectRatio:false,
       plugins:{
-        legend:{
-          display:isDo||datasets.length>1,
-          position:isDo?'bottom':'top',
-          labels:{color:'#737370',font:{family:'IBM Plex Mono',size:10},padding:10,boxWidth:8,usePointStyle:true}
-        },
-        tooltip:{
-          backgroundColor:'#1C1C1A',borderColor:'#E5E4E0',borderWidth:1,
-          titleColor:'#C47F17',bodyColor:'#E5E4E0',
-          titleFont:{family:'IBM Plex Mono',size:10},
-          bodyFont:{family:'Figtree',size:12},padding:10,cornerRadius:6,
-          callbacks:{
-            label:ctx=>{
-              const v=ctx.raw;
-              if(money)return` R$ ${typeof v==='number'?v.toLocaleString('pt-BR',{maximumFractionDigits:0}):v}`;
-              return` ${typeof v==='number'?v.toLocaleString('pt-BR',{maximumFractionDigits:0}):v}`;
-            }
-          }
+        legend:{display:isDo||datasets.length>1,position:isDo?'bottom':'top',labels:{color:'#737370',font:{family:'IBM Plex Mono',size:10},padding:10,boxWidth:8,usePointStyle:true}},
+        tooltip:{backgroundColor:'#1C1C1A',borderColor:'#E5E4E0',borderWidth:1,titleColor:'#C47F17',bodyColor:'#E5E4E0',titleFont:{family:'IBM Plex Mono',size:10},bodyFont:{family:'Figtree',size:12},padding:10,cornerRadius:6,
+          callbacks:{label:ctx=>{const v=ctx.raw;return money?` R$ ${(v||0).toLocaleString('pt-BR',{maximumFractionDigits:0})}`:`  ${(v||0).toLocaleString('pt-BR')}`}}
         }
       },
       scales:isDo?{}:{
-        x:{ticks:{color:'#A8A8A2',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:10},
-          grid:{color:'rgba(229,228,224,0.5)',drawBorder:false}},
-        y:{ticks:{color:'#A8A8A2',font:{family:'IBM Plex Mono',size:9},
-            callback:v=>money?'R$ '+v.toLocaleString('pt-BR',{maximumFractionDigits:0}):v},
-          grid:{color:'rgba(229,228,224,0.5)',drawBorder:false},beginAtZero:true}
+        x:{ticks:{color:'#A8A8A2',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:12},grid:{color:'rgba(229,228,224,0.5)',drawBorder:false}},
+        y:{ticks:{color:'#A8A8A2',font:{family:'IBM Plex Mono',size:9},callback:v=>money?'R$ '+(v||0).toLocaleString('pt-BR',{maximumFractionDigits:0}):v},grid:{color:'rgba(229,228,224,0.5)',drawBorder:false},beginAtZero:true}
       },
       animation:{duration:400}
     }
   });
 }
 
-// ══════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════
-function fmtMoney(n){return(n||0).toLocaleString('pt-BR',{maximumFractionDigits:0})}
-function fmtN(n){return(n||0).toLocaleString('pt-BR')}
+// ── HELPERS ──
+function fmtM(n){return Math.round(n||0).toLocaleString('pt-BR')}
+function fmtN(n){return (n||0).toLocaleString('pt-BR')}
 function fmtDate(d){if(!d)return'';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`}
+function thinDates(arr,max){if(arr.length<=max)return arr;const s=Math.ceil(arr.length/max);return arr.filter((_,i)=>i%s===0)}
+function emptyRow(cols,txt){return`<tr><td colspan="${cols}" style="text-align:center;padding:28px;color:var(--tx3);font-size:13px">${txt}</td></tr>`}
 
-function thinDates(arr,max){
-  if(arr.length<=max)return arr;
-  const step=Math.ceil(arr.length/max);
-  return arr.filter((_,i)=>i%step===0);
+function iMoney(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v.5m0 5v.5m-1.5-3.5h2a.75.75 0 0 1 0 1.5H7a.75.75 0 0 0 0 1.5h2"/></svg>`}
+function iBox(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5l6-3 6 3v6l-6 3-6-3V5z"/><path d="M8 2v11M2 5l6 3 6-3"/></svg>`}
+function iTicket(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1.5"/><line x1="5" y1="4" x2="5" y2="12"/><line x1="11" y1="4" x2="11" y2="12"/></svg>`}
+function iDoc(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2z"/><path d="M9 2v4h4"/></svg>`}
+function iField(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 4H14l-3.5 2.5L12 13 8 10.5 4 13l1.5-4.5L2 6h4.5L8 2z"/></svg>`}
+function iReturn(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 0 6-6"/><polyline points="2,4 2,8 6,8"/></svg>`}
+function iUser(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="2.5"/><path d="M2 13c0-3.3 2.7-5 6-5s6 1.7 6 5"/></svg>`}
+function iAlert(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L1.5 13h13L8 2z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".5" fill="currentColor"/></svg>`}
+
+// ── STATUS & NAVIGATION ──
+function setLoading(msg){document.getElementById('loadingMsg').textContent=msg}
+function hideLoading(){
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('app').style.display='flex';
+}
+function setStatus(st,txt){
+  document.getElementById('statusDot').className='status-dot '+st;
+  document.getElementById('statusTxt').textContent=txt;
 }
 
-function movColor(tipo){
-  const m={
-    entrada:['#DCFCE7','#166534'],entrada_fabrica:['#F5F3FF','#5B21B6'],
-    saida:['#FEE2E2','#991B1B'],saida_fabrica:['#FEE2E2','#991B1B'],
-    ajuste:['#FEF3C7','#92400E'],retorno_vasilhame:['#DBEAFE','#1E40AF'],
-    devolucao_cliente:['#FEF3C7','#92400E'],venda:['#FEF3C7','#92400E']
-  };
-  return m[tipo]||['#F3F3F1','#6B6B66'];
-}
-
-function empty(txt){
-  return`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg><p>${txt}</p></div>`;
-}
-function emptyRow(cols,txt){
-  return`<tr><td colspan="${cols}" style="text-align:center;padding:32px;color:var(--tx3);font-size:13px">${txt}</td></tr>`;
-}
-
-// Icons (inline SVG strokes)
-function iconMoney(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v.5m0 5v.5m-1.5-3.5h2a.75.75 0 0 1 0 1.5H7a.75.75 0 0 0 0 1.5h2"/></svg>`}
-function iconBox(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5l6-3 6 3v6l-6 3-6-3V5z"/><path d="M8 2v11M2 5l6 3 6-3"/></svg>`}
-function iconTicket(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1.5"/><line x1="5" y1="4" x2="5" y2="12"/><line x1="11" y1="4" x2="11" y2="12"/></svg>`}
-function iconDoc(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2z"/><path d="M9 2v4h4"/><line x1="5" y1="9" x2="11" y2="9"/><line x1="5" y1="11.5" x2="9" y2="11.5"/></svg>`}
-function iconField(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 4H14l-3.5 2.5L12 13 8 10.5 4 13l1.5-4.5L2 6h4.5L8 2z"/></svg>`}
-function iconReturn(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 0 6-6"/><polyline points="2,4 2,8 6,8"/></svg>`}
-function iconUser(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.5" r="2.5"/><path d="M2 13c0-3.3 2.7-5 6-5s6 1.7 6 5"/></svg>`}
-function iconAlert(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L1.5 13h13L8 2z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".5" fill="currentColor"/></svg>`}
-function iconCalendar(){return`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 7h12M5 2v2M11 2v2"/></svg>`}
-
-// ══════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════
 function setTab(tab){
   S.tab=tab;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll(`[onclick="setTab('${tab}')"]`).forEach(b=>b.classList.add('active'));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+tab)?.classList.add('active');
-
-  // Show/hide tipo movimento filter
-  const tipoMov=document.getElementById('fTipoMov');
-  tipoMov.style.display=tab==='vendas'?'none':'block';
-  const tipoCli=document.getElementById('fTipoCli');
-  tipoCli.style.display=tab==='estoque'?'none':'block';
-
-  if(S.filt) render();
+  document.getElementById('fTipoMov').style.display=tab==='vendas'?'none':'block';
+  document.getElementById('fTipoCli').style.display=tab==='estoque'?'none':'block';
 }
 
 function setEmp(e){
   S.emp=e;
   document.querySelectorAll('#segEmp .seg-btn').forEach(b=>b.classList.remove('active'));
   document.querySelector(`#segEmp [onclick="setEmp('${e}')"]`)?.classList.add('active');
-  applyFilters();
+  if(S.raw) applyFilters();
 }
 
-// ══════════════════════════════════════
-// API
-// ══════════════════════════════════════
-function setApiStatus(st){
-  const dot=document.getElementById('apiDot');
-  const lbl=document.getElementById('apiLabel');
-  if(st==='connected'){dot.className='api-dot ok';lbl.textContent='Conectado'}
-  else{dot.className='api-dot demo';lbl.textContent='Demo'}
-}
-function openModal(){
-  document.getElementById('modalBg').classList.add('open');
-  if(S.apiUrl)document.getElementById('mUrl').value=S.apiUrl;
-}
-function closeModal(){document.getElementById('modalBg').classList.remove('open')}
-function setDemo(){S.apiUrl='';localStorage.removeItem('h3_api');closeModal();setApiStatus('demo')}
-async function conectar(){
-  const url=document.getElementById('mUrl').value.trim();
-  if(!url)return;
-  S.apiUrl=url;localStorage.setItem('h3_api',url);
-  closeModal();
-  try{
-    const r=await fetch(url+'?endpoint=ping');
-    const d=await r.json();
-    if(d.ok||d.status==='ok')setApiStatus('connected');
-    else setApiStatus('demo');
-  }catch{setApiStatus('demo')}
-  applyFilters();
-}
-
-// START
 document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
