@@ -667,42 +667,65 @@ function clearF() {
 }
 
 // ── SALDO VASILHAME ──
+// Regra universal: cada movimentação tem origem e destino.
+//   - Adiciona qty em DESTINO
+//   - Subtrai qty de ORIGEM (somente se origem ≠ destino — transferência real)
+//   - Se origem === destino: apenas recebimento/contagem no mesmo local
+// Isso funciona para: Saída(CD→cli), Entrada(CD→CD), Entrada Fábrica(Newage→CD),
+//   Saldo Inicial(CD→cli), etc.
 function calcVasSaldo(retAll, estAll) {
-  // bySku: { sku → { cd, campo } }
-  const bySku={};
-  // byDest: { destino → { sku → qty } }  (campo por cliente)
-  const byDest={};
+  // byLoc: { localização → { sku → qty } }  — posição líquida em cada local
+  const byLoc = {};
 
-  const ens = s => { if(!bySku[s]) bySku[s]={cd:0,campo:0}; };
-  const ensDest = (d,s) => { if(!byDest[d])byDest[d]={}; if(!byDest[d][s])byDest[d][s]=0; };
+  const addLoc = (loc, sku, q) => {
+    if(!loc) return;
+    if(!byLoc[loc]) byLoc[loc] = {};
+    byLoc[loc][sku] = (byLoc[loc][sku] || 0) + q;
+  };
 
   retAll.forEach(r => {
-    const sku=r.sku||'OUTROS', orig=(r.origem||'').trim(), dest=(r.destino||'').trim();
-    const tipo=(r.tipo_mov||'').trim(), q=+(r.qtd)||0;
-    ens(sku);
-    if(tipo==='Saída') {
-      if(dest!==CD){bySku[sku].campo+=q;ensDest(dest,sku);byDest[dest][sku]+=q;}
-      else bySku[sku].cd=Math.max(0,bySku[sku].cd-q);
-    } else if(tipo==='Saída Fábrica') {
-      if(dest===CD)bySku[sku].cd+=q;
-      else{bySku[sku].campo+=q;ensDest(dest,sku);byDest[dest][sku]+=q;}
-    } else if(tipo==='Entrada') {
-      if(dest===CD)bySku[sku].cd+=q;
-      else{bySku[sku].campo=Math.max(0,bySku[sku].campo-q);}
-    } else if(tipo==='Entrada Fábrica') {
-      if(orig!==CD&&orig)bySku[sku].campo=Math.max(0,bySku[sku].campo-q);
-      else bySku[sku].cd=Math.max(0,bySku[sku].cd-q);
-    } else if(tipo==='Saldo Inicial') {
-      if(dest===CD||!dest)bySku[sku].cd+=q;
-      else{bySku[sku].campo+=q;ensDest(dest,sku);byDest[dest][sku]+=q;}
-    } else if(tipo==='Ajuste') {
-      bySku[sku].cd=Math.max(0,bySku[sku].cd+q);
+    const sku  = r.sku  || 'OUTROS';
+    const orig = (r.origem  || '').trim();
+    const dest = (r.destino || '').trim();
+    const q    = +(r.qtd) || 0;
+
+    // Sempre adiciona ao destino
+    addLoc(dest, sku, +q);
+
+    // Subtrai da origem SOMENTE se é uma transferência real (orig ≠ dest)
+    if(orig && dest && orig !== dest) {
+      addLoc(orig, sku, -q);
     }
   });
 
-  // Normalize
-  Object.values(bySku).forEach(v=>{v.cd=Math.max(0,v.cd);v.campo=Math.max(0,v.campo);});
-  Object.values(byDest).forEach(m=>Object.keys(m).forEach(k=>{m[k]=Math.max(0,m[k]);}));
+  // Normaliza negativos a zero
+  Object.values(byLoc).forEach(skuMap => {
+    Object.keys(skuMap).forEach(k => { skuMap[k] = Math.max(0, skuMap[k]); });
+  });
+
+  // Deriva bySku (cd + campo) e byDest (locais não-CD) a partir de byLoc
+  const bySku  = {};
+  const byDest = {};  // apenas locais ≠ CD (clientes, fábrica, terceiros)
+
+  Object.entries(byLoc).forEach(([loc, skuMap]) => {
+    const isCD = loc === CD;
+    Object.entries(skuMap).forEach(([sku, qty]) => {
+      if(!bySku[sku]) bySku[sku] = {cd:0, campo:0};
+      if(isCD) bySku[sku].cd   += qty;
+      else     bySku[sku].campo += qty;
+    });
+    if(!isCD) byDest[loc] = {...skuMap};
+  });
+
+  // Classifica locais: clientes (em cliMap) vs terceiros/fábrica
+  const cliMap = S.raw.cliMap || {};
+  const isCli = loc => !!(cliMap[(loc||'').toUpperCase()]);
+
+  // Garante que bySku tenha todos os skus de todos os locais
+  Object.values(bySku).forEach(v => {
+    v.cd    = Math.max(0, v.cd);
+    v.campo = Math.max(0, v.campo);
+  });
 
   // Barris cheios no CD = estoque saldo de chopp barril por litros
   // Map: litros_barril → qty in estoque
@@ -865,6 +888,15 @@ function renderVasilhame(retMov, vasSaldo) {
     totBarrisCheiosCD+=(barrisCheiosByVasSku[bsku]||0);
   });
   const barrisVaziosPatio=Math.max(0,totBarrilCD-totBarrisCheiosCD);
+
+  // Separar campo em: clientes vs terceiros (fábrica, etc.)
+  const cliBarrisCampo = Object.entries(byDest)
+    .filter(([loc]) => isCli(loc))
+    .reduce((a,[,m]) => a + BARRIL_SKUS.reduce((b,s)=>b+(m[s]||0),0), 0);
+  const tercBarrisCampo = Object.entries(byDest)
+    .filter(([loc]) => !isCli(loc))
+    .reduce((a,[,m]) => a + BARRIL_SKUS.reduce((b,s)=>b+(m[s]||0),0), 0);
+
   const totBarrilCampo=BARRIL_SKUS.reduce((a,s)=>a+(bySku[s]?.campo||0),0);
   const totEquipCampo=Object.entries(bySku).filter(([s])=>!BARRIL_SKUS.includes(s)).reduce((a,[,v])=>a+v.campo,0);
   const saidasN=retMov.filter(r=>['Saída','Saída Fábrica'].includes(r.tipo_mov)).reduce((a,r)=>a+(+(r.qtd)||0),0);
@@ -872,10 +904,10 @@ function renderVasilhame(retMov, vasSaldo) {
   const taxa=saidasN>0?Math.round((entN/saidasN)*100):0;
 
   document.getElementById('kpi-vas').innerHTML=[
-    {l:`Barris no pátio (${fmtN(totBarrilCD)} total − ${fmtN(totBarrisCheiosCD)} cheios)`,v:fmtN(barrisVaziosPatio)+' vazios',cls:'g',ico:iCD()},
-    {l:'Barris em campo (clientes)',v:fmtN(totBarrilCampo),cls:'b',ico:iTruck()},
-    {l:'Equipamentos em campo',v:fmtN(totEquipCampo),cls:'a',ico:iEquip()},
-    {l:'Taxa de retorno',v:taxa+'%',cls:taxa>60?'g':taxa>35?'a':'r',ico:iReturn()},
+    {l:`Pátio CD — ${fmtN(totBarrilCD)} total (${fmtN(totBarrisCheiosCD)} cheios)`,v:fmtN(barrisVaziosPatio)+' vazios',cls:'g',ico:iCD()},
+    {l:'Em campo — clientes',v:fmtN(cliBarrisCampo),cls:'b',ico:iTruck()},
+    {l:'Em terceiros / fábrica',v:fmtN(tercBarrisCampo),cls:'p',ico:iEquip()},
+    {l:'Equipamentos em campo',v:fmtN(totEquipCampo),cls:'a',ico:iReturn()},
   ].map(k=>`<div class="kpi"><div class="kpi-top"><span class="kpi-lbl">${k.l}</span><div class="kpi-ico ${k.cls}">${k.ico}</div></div><div class="kpi-val">${k.v}</div></div>`).join('');
 
   // Barril cards com vazios/cheios/campo
@@ -904,6 +936,7 @@ function renderVasilhame(retMov, vasSaldo) {
   }).join('')||'<div style="color:var(--tx3);padding:12px">Sem barris registrados</div>';
 
   // Tabela clientes com colunas por tipo de barril
+  // Inclui TODOS os locais ≠ CD (clientes + fábrica + terceiros)
   const BARRIL_COLS = [
     {sku:'BARRIL-10L',lbl:'10L'},
     {sku:'BARRIL-20L',lbl:'20L'},
@@ -912,24 +945,30 @@ function renderVasilhame(retMov, vasSaldo) {
   ];
   const cliEntries=Object.entries(byDest).map(([dest,skuMap])=>{
     const barris={};
-    let totBarris=0,outrosBarris=0;
+    let totBarris=0, outrosBarris=0;
     BARRIL_COLS.forEach(col=>{barris[col.sku]=Math.max(0,skuMap[col.sku]||0);totBarris+=barris[col.sku];});
-    // barris not in cols (15L etc)
-    BARRIL_SKUS.filter(s=>!BARRIL_COLS.find(c=>c.sku===s)).forEach(s=>{outrosBarris+=Math.max(0,skuMap[s]||0);totBarris+=outrosBarris;});
+    BARRIL_SKUS.filter(s=>!BARRIL_COLS.find(c=>c.sku===s)).forEach(s=>{outrosBarris+=Math.max(0,skuMap[s]||0);totBarris+=Math.max(0,skuMap[s]||0);});
     const equip=Object.entries(skuMap).filter(([s])=>!BARRIL_SKUS.includes(s)).reduce((a,[,v])=>a+v,0);
     const info=cliMap[(dest||'').toUpperCase()]||{};
-    return {dest,barris,totBarris,outrosBarris,equip,tipo:info.tipo||'—'};
-  }).filter(c=>c.totBarris>0).sort((a,b)=>b.totBarris-a.totBarris);
+    const tipo=info.tipo||(isCli(dest)?'PDV':'Terceiro');
+    return {dest, barris, totBarris, outrosBarris, equip, tipo, isTerceiro:!isCli(dest)};
+  }).filter(c=>c.totBarris>0||c.equip>0).sort((a,b)=>{
+    // Terceiros primeiro, depois por qtd decrescente
+    if(a.isTerceiro!==b.isTerceiro) return a.isTerceiro?-1:1;
+    return b.totBarris-a.totBarris;
+  });
 
-  document.getElementById('vas-cli-meta').textContent=cliEntries.length+' clientes';
-  document.getElementById('vas-cli-tbl').innerHTML=cliEntries.map(c=>`<tr>
-    <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.dest}</td>
-    <td><span class="pill ${c.tipo==='Distribuidor'?'p-bl':c.tipo==='PDV'?'p-ok':'p-gy'}" style="font-size:8px">${c.tipo}</span></td>
+  document.getElementById('vas-cli-meta').textContent=cliEntries.length+' locais';
+  document.getElementById('vas-cli-tbl').innerHTML=cliEntries.map(c=>`<tr style="${c.isTerceiro?'background:#FEFBF0':''}" >
+    <td style="font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+      ${c.isTerceiro?'🏭 ':'' }${c.dest}
+    </td>
+    <td><span class="pill ${c.isTerceiro?'p-w':c.tipo==='Distribuidor'?'p-bl':c.tipo==='PDV'?'p-ok':'p-gy'}" style="font-size:8px">${c.isTerceiro?'Terceiro':c.tipo}</span></td>
     ${BARRIL_COLS.map(col=>`<td class="center mono">${c.barris[col.sku]||'—'}</td>`).join('')}
     <td class="center mono">${c.outrosBarris||'—'}</td>
-    <td class="right mono bold" style="color:var(--blue)">${c.totBarris}</td>
+    <td class="right mono bold" style="color:${c.isTerceiro?'var(--amber)':'var(--blue)'}">${c.totBarris}</td>
     <td class="right mono">${c.equip||'—'}</td>
-  </tr>`).join('')||eRow(9,'Nenhum barril em campo');
+  </tr>`).join('')||eRow(9,'Nenhum barril fora do CD');
 
   // Dist vs PDV
   const distB=cliEntries.filter(c=>c.tipo==='Distribuidor').reduce((a,c)=>a+c.totBarris,0);
@@ -998,8 +1037,9 @@ function searchCliente(q) {
     res.innerHTML='<div style="color:var(--tx3);font-size:13px;text-align:center;padding:20px">Digite o nome do cliente para ver a posição consolidada.</div>';
     return;
   }
-  const {byDest,bySku}=S._vasSaldo;
+  const {byDest}=S._vasSaldo;
   const cliMap=S.raw.cliMap||{};
+  const isCli=loc=>!!(cliMap[(loc||'').toUpperCase()]);
   const BARRIL_COLS=[
     {sku:'BARRIL-10L',lbl:'Barril 10L'},
     {sku:'BARRIL-20L',lbl:'Barril 20L'},
@@ -1010,10 +1050,12 @@ function searchCliente(q) {
   const equipNomes={'CHOP-1V-LISA-110':'Chopeira 1V L.110V','CHOP-1V-LISA-220':'Chopeira 1V L.220V','CHOP-1V-PERSO-110':'Chopeira 1V P.110V','CHOP-1V-PERSO-220':'Chopeira 1V P.220V','CHOP-2V-LISA-110':'Chopeira 2V L.110V','CHOP-2V-LISA-220':'Chopeira 2V L.220V','CHOP-2V-PERS-220':'Chopeira 2V P.220V','CHOP-3V-LISA':'Chopeira 3V Lisa','CHOP-3V-PERSO':'Chopeira 3V Pers.','CARRINHO-HARDEN':'Carrinho','PRE-RESFR-2V':'Pré-resfr. 2V','PRE-RESFR-5V':'Pré-resfr. 5V','PINGUADEIRA':'Pinguadeira','HRD-CO2-6':'CO₂ 6kg'};
 
   const matches=Object.entries(byDest).filter(([dest])=>dest.toLowerCase().includes(qs)).slice(0,6);
-  if(!matches.length){res.innerHTML='<div style="color:var(--tx3);font-size:13px;text-align:center;padding:20px">Nenhum cliente encontrado.</div>';return;}
+  if(!matches.length){res.innerHTML='<div style="color:var(--tx3);font-size:13px;text-align:center;padding:20px">Nenhum local encontrado.</div>';return;}
 
   res.innerHTML=matches.map(([dest,skuMap])=>{
     const info=cliMap[(dest||'').toUpperCase()]||{};
+    const isTerc=!isCli(dest);
+    const tipo=info.tipo||(isTerc?'Terceiro / Fábrica':'PDV');
     const barrisItems=BARRIL_COLS.map(col=>{
       const qty=Math.max(0,skuMap[col.sku]||0);
       return qty>0?`<div class="cli-item"><div class="cli-item-num">${qty}</div><div class="cli-item-lbl">${col.lbl}</div></div>`:'';
@@ -1021,13 +1063,13 @@ function searchCliente(q) {
     const equipItems=Object.entries(skuMap).filter(([s])=>!BARRIL_SKUS.includes(s)&&skuMap[s]>0).map(([s,q])=>`<div class="cli-item"><div class="cli-item-num" style="color:var(--amber)">${q}</div><div class="cli-item-lbl">${equipNomes[s]||s}</div></div>`).join('');
     const totBarris=BARRIL_SKUS.reduce((a,s)=>a+Math.max(0,skuMap[s]||0),0);
     const totEquip=Object.entries(skuMap).filter(([s])=>!BARRIL_SKUS.includes(s)).reduce((a,[,v])=>a+v,0);
-    return `<div class="cli-result-card">
+    return `<div class="cli-result-card" style="${isTerc?'border-color:var(--amber-l);background:#FFFDF5':''}">
       <div class="cli-result-name">
-        ${dest}
-        <span class="pill ${info.tipo==='Distribuidor'?'p-bl':info.tipo==='PDV'?'p-ok':'p-gy'}">${info.tipo||'—'}</span>
+        ${isTerc?'🏭 ':''}${dest}
+        <span class="pill ${isTerc?'p-w':tipo==='Distribuidor'?'p-bl':tipo==='PDV'?'p-ok':'p-gy'}">${tipo}</span>
         <span style="font-family:var(--mono);font-size:11px;color:var(--tx3);font-weight:400;margin-left:4px">${totBarris} barris · ${totEquip} equip.</span>
       </div>
-      ${barrisItems||equipItems?`<div class="cli-result-grid">${barrisItems}${equipItems}</div>`:'<div style="color:var(--tx3);font-size:12px">Sem retornáveis em campo</div>'}
+      ${barrisItems||equipItems?`<div class="cli-result-grid">${barrisItems}${equipItems}</div>`:'<div style="color:var(--tx3);font-size:12px">Sem retornáveis neste local</div>'}
     </div>`;
   }).join('');
 }
