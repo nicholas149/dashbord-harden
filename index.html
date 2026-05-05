@@ -482,6 +482,9 @@ const CHOPP_COLORS = ['#C47F17','#2563EB','#16A34A','#DC2626','#7C3AED','#0891B2
 
 const S = { emp:'todos', tab:'estoque', vasView:'geral', raw:{}, charts:{} };
 
+// Helper: verifica se um local é um cliente cadastrado
+const isCli = loc => !!(S.raw.cliMap && S.raw.cliMap[(loc||'').toUpperCase()]);
+
 // ── DATE ──
 const parseBR = s => { if(!s)return null; const p=String(s).trim().split('/'); return p.length===3?new Date(+p[2],+p[1]-1,+p[0]):null; };
 const br2iso  = s => { if(!s)return''; const p=String(s).trim().split('/'); return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:'' };
@@ -718,8 +721,7 @@ function calcVasSaldo(retAll, estAll) {
   });
 
   // Classifica locais: clientes (em cliMap) vs terceiros/fábrica
-  const cliMap = S.raw.cliMap || {};
-  const isCli = loc => !!(cliMap[(loc||'').toUpperCase()]);
+  // isCli é global e usa S.raw.cliMap
 
   // Garante que bySku tenha todos os skus de todos os locais
   Object.values(bySku).forEach(v => {
@@ -1039,7 +1041,6 @@ function searchCliente(q) {
   }
   const {byDest}=S._vasSaldo;
   const cliMap=S.raw.cliMap||{};
-  const isCli=loc=>!!(cliMap[(loc||'').toUpperCase()]);
   const BARRIL_COLS=[
     {sku:'BARRIL-10L',lbl:'Barril 10L'},
     {sku:'BARRIL-20L',lbl:'Barril 20L'},
