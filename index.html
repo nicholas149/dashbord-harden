@@ -427,15 +427,16 @@ async function loadAll(){
     if(!idx.ok)throw new Error('API offline');
     const abas=idx.dados.abas.map(a=>a.nome);
     const fa=kw=>abas.find(a=>a.toLowerCase().includes(kw.toLowerCase()))||kw;
-    const [v,e,ret,cli,ab,fr]=await Promise.all([
+    const [v,e,ret,bkl,cli,ab,fr]=await Promise.all([
       fetchSheet(fa('Vendas')),fetchSheet(fa('Estoque')),fetchSheet(fa('Retorn')),
+      fetchSheet(fa('backlog')||'backlog_retornavel'),
       fetchSheet(fa('Clientes')),fetchSheet(fa('Abastec')),fetchSheet(fa('Frota')),
     ]);
-    D.v=v;D.e=e;D.ret=ret;D.cli=cli;D.ab=ab;D.fr=fr;
+    D.v=v;D.e=e;D.ret=ret;D.bkl=bkl;D.cli=cli;D.ab=ab;D.fr=fr;
     cliTipo={};
     (cli||[]).forEach(c=>{if(c.id)cliTipo[c.id]=c.tipo||'';if(c.nome_canonico)cliTipo[c.nome_canonico]=c.tipo||'';});
     buildEstoque(e);
-    buildRetornaveis(ret,e);
+    buildRetornaveis(bkl,e);
     buildAbastecimento(ab,fr);
     buildVendas(v);
     setStatus('ok','Online');
@@ -557,14 +558,26 @@ function renderETable(all){
 }
 
 /* ═══════════════════════════════════════════
-   RETORNÁVEIS
-   LÓGICA CORRETA:
-   - Pátio CD = saldo do ESTOQUE de chopp (sum qtd_entrada - sum qtd_saida por SKU na aba Estoque)
-   - Em campo = o que está nos clientes/distribuidores = dados da aba Retornáveis
-     onde cada linha tem: sku, produto, destino, destino_id, qtd (saldo naquele destino)
-   - A soma de qtd por (destino_id, sku) dá o total em campo por destino
+   RETORNÁVEIS — usa aba backlog_retornavel
+   ─────────────────────────────────────────
+   CÁLCULOS:
+
+   1. SALDO CD por SKU:
+      Σ qtd_entrada_cd − Σ qtd_saida_cd (todas as linhas do SKU)
+      → Ex: BARRIL-50L CD = 1576 − (soma de todas saídas)
+
+   2. SALDO POR TERCEIRO por SKU:
+      Para cada (terceiro, sku): Σ qtd_saida_cd
+      → Negativo = distribuidora está devendo barris
+
+   3. VASILHAMES DISPONÍVEIS no pátio:
+      Saldo CD do barril (ex: BARRIL-50L) − quantidade de
+      produtos Chopp Barril com esse tamanho em estoque
+      (barris cheios que ainda estão no CD, extraído por
+      SKU de estoque contendo o número "50", "30", etc.)
+      → Vasilhames livres = barris vazios disponíveis
 ═══════════════════════════════════════════ */
-let _retAll=[]; // cache para filtros
+let _bklAll=[];
 function rTab(tab,btn){
   ['geral','dist','pdv','chopeiras'].forEach(t=>{
     const el=$('rp-'+t);if(el)el.style.display=t===tab?'block':'none';
@@ -572,142 +585,194 @@ function rTab(tab,btn){
   document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
-
 function applyRFilters(){
   const fp=$('r-filt-prod')?.value||'';
   const fc=$('r-filt-cli')?.value||'';
-  renderRetornaveisTables(_retAll,fp,fc);
+  renderRetornaveisTables(_bklAll,fp,fc);
 }
 
 function buildRetornaveis(rows,estoqueRows){
-  if(!rows||!rows.length){$('r-kpis').innerHTML='<p style="color:var(--t3)">Sem dados de retornáveis</p>';return;}
+  if(!rows||!rows.length){
+    $('r-kpis').innerHTML='<p style="color:var(--t3)">Sem dados. Verifique se a aba "backlog_retornavel" está acessível.</p>';
+    return;
+  }
 
-  /* 1. Pátio CD = saldo do estoque de chopp (aba Estoque) */
-  const estSku={};
-  (estoqueRows||[]).forEach(r=>{
-    const sku=(r.sku||'').trim();
-    if(!LC(r.categoria||'').includes('chopp'))return;
-    if(!estSku[sku])estSku[sku]={sku,nome:r.produto||sku,E:0,S:0};
-    estSku[sku].E+=(+r.qtd_entrada||0);
-    estSku[sku].S+=(+r.qtd_saida||0);
-  });
-
-  /* 2. Em campo: agrupa por (destino_id, sku) somando qtd */
-  const byCampo={};
+  /* ─── 1. Saldo CD por SKU: Σ entrada − Σ saída ─── */
+  const saldoCD={};   // sku → {produto, tipo, E, S, saldoCD}
   rows.forEach(r=>{
     const sku=(r.sku||'').trim();
-    const dId=((r.destino_id||r.destino||'—')).trim();
-    const dest=(r.destino||'—').trim();
-    const prod=(r.produto||sku).trim();
-    const qtd=+(r.qtd)||0;
-    const tipo=cliTipo[dId]||cliTipo[dest]||'Outros';
-    const key=`${dId}||${sku}`;
-    if(!byCampo[key])byCampo[key]={dId,dest,sku,prod,tipo,qtd:0};
-    byCampo[key].qtd+=qtd;
+    if(!saldoCD[sku])saldoCD[sku]={sku,produto:r.produto||sku,tipo:r.tipo_retornavel||'—',E:0,S:0};
+    saldoCD[sku].E+=(+r.qtd_entrada_cd||0);
+    saldoCD[sku].S+=(+r.qtd_saida_cd||0);
   });
-  _retAll=Object.values(byCampo);
+  Object.values(saldoCD).forEach(s=>s.saldoCD=s.E-s.S);
 
-  /* 3. Popularizar filtros de produto e cliente */
-  const prods=[...new Set(_retAll.map(i=>i.prod).filter(Boolean))].sort();
-  const clis=[...new Set(_retAll.map(i=>i.dest).filter(Boolean))].sort();
-  const pSel=$('r-filt-prod'),cSel=$('r-filt-cli');
-  if(pSel){pSel.innerHTML='<option value="">Todos os produtos</option>'+prods.map(p=>`<option value="${p}">${SH(p,30)}</option>`).join('');}
-  if(cSel){cSel.innerHTML='<option value="">Todos os clientes</option>'+clis.map(c=>`<option value="${c}">${SH(c,30)}</option>`).join('');}
+  /* ─── 2. Saldo por terceiro por SKU ─── */
+  // key = terceiro_id||sku
+  const porTerceiro={};
+  rows.filter(r=>r.terceiro&&r.terceiro.trim()).forEach(r=>{
+    const sku=(r.sku||'').trim();
+    const tId=(r.terceiro_id||r.terceiro||'').trim();
+    const tNome=(r.terceiro||'').trim();
+    const key=`${tId}||${sku}`;
+    if(!porTerceiro[key])porTerceiro[key]={tId,tNome,sku,produto:r.produto||sku,tipo:r.tipo_retornavel||'—',saldo:0};
+    // Saídas do CD para o terceiro = qtd_saida_cd
+    porTerceiro[key].saldo+=(+r.qtd_saida_cd||0);
+    // Entradas do terceiro de volta ao CD = qtd_entrada_cd (quando há retorno)
+    porTerceiro[key].saldo-=(+r.qtd_entrada_cd||0);
+  });
+  _bklAll=Object.values(porTerceiro);
 
-  /* 4. KPIs */
-  const totPatio=Object.values(estSku).reduce((s,i)=>s+Math.max(0,i.E-i.S),0);
-  const totCampo=_retAll.filter(i=>i.qtd>0).reduce((s,i)=>s+i.qtd,0);
-  const alertas=_retAll.filter(i=>i.qtd<0).length;
-  const destAtivos=new Set(_retAll.filter(i=>i.qtd>0).map(i=>i.dId)).size;
+  /* ─── 3. Vasilhames disponíveis ─── */
+  // Mapeia o estoque de chopp por tamanho de barril
+  // SKU de estoque como HRD-PIL-50 → tamanho 50 → usa BARRIL-50L
+  const estPorTamanho={10:0,20:0,30:0,50:0};
+  (estoqueRows||[]).forEach(r=>{
+    if(!LC(r.categoria||'').includes('chopp'))return;
+    const sku=r.sku||'';
+    const m=sku.match(/[-_](\d+)L?$/i);
+    const sz=m?+m[1]:0;
+    if([10,20,30,50].includes(sz)){
+      estPorTamanho[sz]+=(+r.qtd_entrada||0)-(+r.qtd_saida||0);
+    }
+  });
+  // Vasilhames disponíveis por tamanho = saldo barril no CD − estoque produtos cheios
+  const vasilhamesDisp={};
+  [10,20,30,50].forEach(sz=>{
+    const bSku=`BARRIL-${sz}L`;
+    const saldo=saldoCD[bSku]?.saldoCD||0;
+    const cheios=Math.max(0,estPorTamanho[sz]);
+    vasilhamesDisp[sz]={saldoCD:saldo,cheios,disponiveis:saldo-cheios};
+  });
+
+  /* ─── KPIs ─── */
+  const totBarrilCD=Object.values(saldoCD).filter(s=>s.tipo==='barril'||s.sku.startsWith('BARRIL')).reduce((t,s)=>t+s.saldoCD,0);
+  const totTerceiros=_bklAll.reduce((t,i)=>t+i.saldo,0);
+  const negativos=_bklAll.filter(i=>i.saldo<0).length;
+  const distAtivos=new Set(_bklAll.filter(i=>i.saldo>0).map(i=>i.tId)).size;
+  const totDisponiveis=Object.values(vasilhamesDisp).reduce((t,v)=>t+Math.max(0,v.disponiveis),0);
 
   $('r-kpis').innerHTML=
-    kpi('Pátio CD',N(totPatio)+' un.','saldo de estoque de chopp')+
-    kpi('Em campo',N(totCampo)+' un.','nos clientes/distribuidores')+
-    kpi('Destinos ativos',N(destAtivos),'com saldo positivo')+
-    kpi('Alertas negativos',N(alertas),'saldo < 0');
+    kpi('Barris no CD',N(totBarrilCD)+' un.','saldo total retornáveis')+
+    kpi('Em terceiros',N(totTerceiros)+' un.','Σ saídas − Σ entradas')+
+    kpi('Vasilhames livres',N(totDisponiveis)+' un.','barris vazios disponíveis')+
+    kpi('Negativos',N(negativos),'terceiros devendo')+
+    kpi('Destinos',N(distAtivos),'com saldo positivo');
 
-  /* 5. Cards Pátio CD por produto (saldo estoque) */
-  const patioArr=Object.values(estSku).map(s=>({...s,saldo:s.E-s.S})).filter(i=>i.E>0||i.S>0).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
-  $('r-patio').innerHTML=patioArr.length?patioArr.map(i=>{
-    const col=pCol(i.sku),b=i.saldo>0?'b-ok':(i.saldo===0?'b-w':'b-err');
-    return`<div class="pc" style="--acc:${col}">
-      <div class="pc-sku">${i.sku}</div>
-      <div class="pc-nm">${i.nome}</div>
-      <div class="pc-v">${N(i.saldo)}</div>
-      <div class="pc-s">saldo pátio</div>
-      <div style="margin-top:8px"><span class="badge ${b}">${i.saldo>0?'OK':(i.saldo===0?'Zerado':'Negativo')}</span></div>
+  /* ─── Cards Pátio CD: barris por SKU ─── */
+  const barrilSkus=Object.values(saldoCD).filter(s=>s.tipo==='barril'||s.sku.startsWith('BARRIL')).sort((a,b)=>a.sku.localeCompare(b.sku));
+  $('r-patio').innerHTML=`
+    <div style="grid-column:1/-1;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px">
+        ${barrilSkus.map(s=>{
+          const sz=+(s.sku.match(/(\d+)L$/i)||[])[1]||0;
+          const vd=vasilhamesDisp[sz];
+          const col=sz===50?AM:sz===30?TE:sz===20?BL:sz===10?GN:'#8B6914';
+          return`<div class="pc" style="--acc:${col}">
+            <div class="pc-sku">${s.sku}</div>
+            <div class="pc-nm">${s.produto}</div>
+            <div class="pc-v">${N(s.saldoCD)}</div>
+            <div class="pc-s">saldo total no CD</div>
+            ${vd?`<div style="margin-top:6px;font-size:10px;color:var(--t3)">Cheios: ${N(vd.cheios)}</div>
+            <div style="font-size:11px;font-weight:600;color:${vd.disponiveis>=0?'var(--gn)':'var(--rd)'};margin-top:2px">Livres: ${N(vd.disponiveis)}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div style="grid-column:1/-1;font-size:11px;color:var(--t3);padding:8px 12px;background:var(--sf2);border-radius:var(--r);border:1px solid var(--bd)">
+      💡 <b>Vasilhames livres</b> = saldo do barril no CD − barris cheios em estoque (prontos para entrega). Barris com produto = ocupados. Barris livres = disponíveis para novo enchimento ou empréstimo.
     </div>`;
-  }).join(''):'<p style="color:var(--t3);font-size:12px">Nenhum chopp encontrado no estoque. Verifique a categoria dos produtos.</p>';
 
-  renderRetornaveisTables(_retAll,'','');
+  /* ─── Popula filtros ─── */
+  const prods=[...new Set(_bklAll.map(i=>i.produto).filter(Boolean))].sort();
+  const clis=[...new Set(_bklAll.map(i=>i.tNome).filter(Boolean))].sort();
+  const pSel=$('r-filt-prod'),cSel=$('r-filt-cli');
+  if(pSel)pSel.innerHTML='<option value="">Todos os produtos</option>'+prods.map(p=>`<option value="${p}">${SH(p,30)}</option>`).join('');
+  if(cSel)cSel.innerHTML='<option value="">Todos os clientes</option>'+clis.map(c=>`<option value="${c}">${SH(c,30)}</option>`).join('');
+
+  renderRetornaveisTables(_bklAll,'','');
 }
 
 function renderRetornaveisTables(all,filtProd,filtCli){
-  /* Aplica filtros */
   let items=all;
-  if(filtProd)items=items.filter(i=>i.prod===filtProd);
-  if(filtCli)items=items.filter(i=>i.dest===filtCli);
+  if(filtProd)items=items.filter(i=>i.produto===filtProd);
+  if(filtCli) items=items.filter(i=>i.tNome===filtCli);
 
-  /* Gráfico por produto */
+  /* Gráfico por produto — saldo em terceiros */
   const porProd={};
-  items.filter(i=>i.qtd>0).forEach(i=>{porProd[i.prod]=(porProd[i.prod]||0)+i.qtd;});
+  items.forEach(i=>{porProd[i.produto]=(porProd[i.produto]||0)+i.saldo;});
   const pArr=Object.entries(porProd).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  mkChart('cRProd',{type:'bar',data:{labels:pArr.map(p=>SH(p[0],22)),datasets:[{label:'Un.',data:pArr.map(p=>Math.round(p[1])),backgroundColor:BL+'CC',borderColor:BL,borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>N(v)+' un'}},y:{ticks:{font:{size:10}}}}}});
+  mkChart('cRProd',{type:'bar',data:{labels:pArr.map(p=>SH(p[0],22)),datasets:[{
+    label:'Saldo',
+    data:pArr.map(p=>p[1]),
+    backgroundColor:pArr.map(p=>p[1]>=0?BL+'CC':RD+'CC'),
+    borderColor:pArr.map(p=>p[1]>=0?BL:RD),
+    borderWidth:1,borderRadius:4
+  }]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>N(v)+' un'}},y:{ticks:{font:{size:10}}}}}});
 
-  /* Tipo donut */
+  /* Tipo donut: por tipo de cliente */
   let qD=0,qP=0,qO=0;
-  items.filter(i=>i.qtd>0).forEach(i=>{
-    if(i.tipo==='Distribuidor')qD+=i.qtd;
-    else if(i.tipo==='PDV/DELIV'||i.tipo==='PDV'||i.tipo==='DELIV')qP+=i.qtd;
-    else qO+=i.qtd;
+  items.forEach(i=>{
+    const t=cliTipo[i.tId]||cliTipo[i.tNome]||'Outros';
+    if(t==='Distribuidor')qD+=i.saldo;
+    else if(t==='PDV/DELIV'||t==='PDV'||t==='DELIV')qP+=i.saldo;
+    else qO+=i.saldo;
   });
   const rTC=[AM,TE,SL];
-  mkChart('cRTipo',{type:'doughnut',data:{labels:['Distribuidor','PDV/Delivery','Outros'],datasets:[{data:[Math.round(qD),Math.round(qP),Math.round(qO)],backgroundColor:rTC,borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
+  mkChart('cRTipo',{type:'doughnut',data:{labels:['Distribuidor','PDV/Delivery','Outros'],datasets:[{data:[Math.max(0,qD),Math.max(0,qP),Math.max(0,qO)],backgroundColor:rTC,borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
   $('leg-rt').innerHTML=['Distribuidor','PDV/Delivery','Outros'].map((l,i)=>`<div class="li"><div class="ld" style="background:${rTC[i]}"></div>${l}: <b>${N([qD,qP,qO][i])}</b></div>`).join('');
 
   /* Tabela geral */
   $('r-total-lbl').textContent=items.length+' registros';
-  const sortedC=items.filter(i=>i.qtd!==0).sort((a,b)=>b.qtd-a.qtd);
-  $('r-rows-g').innerHTML=sortedC.slice(0,100).map(i=>{
-    const b=i.qtd>0?'b-ok':(i.qtd<0?'b-err':'b-w');
-    const tb=i.tipo==='Distribuidor'?'b-bl':(i.tipo==='PDV/DELIV'||i.tipo==='PDV'?'b-te':'b-w');
+  const sortedC=[...items].sort((a,b)=>a.tNome.localeCompare(b.tNome,'pt-BR'));
+  $('r-rows-g').innerHTML=sortedC.slice(0,150).map(i=>{
+    const b=i.saldo>0?'b-ok':(i.saldo<0?'b-err':'b-w');
+    const t=cliTipo[i.tId]||cliTipo[i.tNome]||'Outros';
+    const tb=t==='Distribuidor'?'b-bl':(t==='PDV/DELIV'||t==='PDV'?'b-te':'b-w');
     return`<tr>
       <td class="tm" style="font-size:10px;color:var(--t3)">${i.sku}</td>
-      <td>${SH(i.prod,22)}</td>
-      <td>${SH(i.dest,22)}</td>
-      <td class="tm" style="font-size:10px;color:var(--t3)">${i.dId}</td>
-      <td class="tr"><span class="badge ${b}">${N(i.qtd)}</span></td>
-      <td><span class="badge ${tb}">${i.tipo||'—'}</span></td>
+      <td>${SH(i.produto,22)}</td>
+      <td>${SH(i.tNome,26)}</td>
+      <td class="tm" style="font-size:10px;color:var(--t3)">${i.tId}</td>
+      <td class="tr"><span class="badge ${b}" style="min-width:36px;justify-content:center">${N(i.saldo)}</span></td>
+      <td><span class="badge ${tb}">${t}</span></td>
     </tr>`;
   }).join('')||noRow(6);
 
   /* Tabelas por tamanho de barril */
-  function getSz(sku,prod){const m=((sku||'')+(prod||'')).match(/\b(10|15|20|30|50)\s*L?\b/i);return m?+m[1]:0;}
+  function getSz(sku,prod){const m=((sku||'')+(prod||'')).match(/[-_]?(\d+)L?\b/i);return m?+m[1]:0;}
   function buildBarrilTbl(filterFn,tbodyId){
     const map={};
     items.filter(filterFn).forEach(i=>{
-      const sz=getSz(i.sku,i.prod);
-      if(!map[i.dId])map[i.dId]={name:i.dest,10:0,20:0,30:0,50:0,other:0};
-      if([10,20,30,50].includes(sz))map[i.dId][sz]+=i.qtd;
-      else map[i.dId].other+=i.qtd;
+      const sz=getSz(i.sku,i.produto);
+      const tNome=i.tNome||'—';
+      if(!map[tNome])map[tNome]={name:tNome,10:0,20:0,30:0,50:0,other:0};
+      if([10,20,30,50].includes(sz))map[tNome][sz]+=i.saldo;
+      else map[tNome].other+=i.saldo;
     });
-    const arr=Object.values(map).filter(r=>(r[10]+r[20]+r[30]+r[50]+r.other)!==0).sort((a,b)=>(b[10]+b[20]+b[30]+b[50]+b.other)-(a[10]+a[20]+a[30]+a[50]+a.other));
+    const arr=Object.values(map).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
     $(tbodyId).innerHTML=arr.length?arr.map(r=>{
       const tot=r[10]+r[20]+r[30]+r[50]+r.other;
-      return`<tr><td>${SH(r.name,28)}</td><td class="tr tm">${r[10]||'—'}</td><td class="tr tm">${r[20]||'—'}</td><td class="tr tm">${r[30]||'—'}</td><td class="tr tm">${r[50]||'—'}</td><td class="tr tm">${r.other||'—'}</td><td class="tr tm" style="font-weight:600;color:${tot>0?'var(--gn)':(tot<0?'var(--rd)':'var(--t3)')}">${N(tot)}</td></tr>`;
+      const tc=tot>0?'var(--gn)':(tot<0?'var(--rd)':'var(--t3)');
+      const cell=v=>v!==0?`<span style="color:${v>0?'var(--gn)':(v<0?'var(--rd)':'var(--t3)')};font-weight:${v!==0?'600':'400'}">${N(v)}</span>`:`<span style="color:var(--t3)">—</span>`;
+      return`<tr><td>${SH(r.name,28)}</td><td class="tr tm">${cell(r[10])}</td><td class="tr tm">${cell(r[20])}</td><td class="tr tm">${cell(r[30])}</td><td class="tr tm">${cell(r[50])}</td><td class="tr tm">${cell(r.other)}</td><td class="tr tm" style="font-weight:600;color:${tc}">${N(tot)}</td></tr>`;
     }).join(''):noRow(7);
   }
-  buildBarrilTbl(i=>i.tipo==='Distribuidor','r-rows-d');
-  buildBarrilTbl(i=>i.tipo!=='Distribuidor','r-rows-p');
+  const isTipoDist=i=>{const t=cliTipo[i.tId]||cliTipo[i.tNome]||'';return t==='Distribuidor';};
+  buildBarrilTbl(isTipoDist,'r-rows-d');
+  buildBarrilTbl(i=>!isTipoDist(i),'r-rows-p');
 
   /* Chopeiras */
-  const cKW=['chopeira','coluna','torre','geladeira','freezer','suporte'];
-  const cIt=items.filter(i=>cKW.some(k=>LC(i.prod).includes(k)||LC(i.sku).includes(k)));
-  const totC=cIt.reduce((s,i)=>s+Math.max(0,i.qtd),0),dC=cIt.filter(i=>i.tipo==='Distribuidor').reduce((s,i)=>s+Math.max(0,i.qtd),0);
-  $('r-chop-kpis').innerHTML=kpi('Em campo',N(totC),'total instaladas')+kpi('Distribuidores',N(dC),'unidades')+kpi('PDV/outros',N(totC-dC),'unidades');
-  $('r-rows-c').innerHTML=cIt.filter(i=>i.qtd!==0).sort((a,b)=>b.qtd-a.qtd).map(i=>{
-    const b=i.qtd>0?'b-ok':'b-err',tb=i.tipo==='Distribuidor'?'b-bl':(i.tipo==='PDV/DELIV'||i.tipo==='PDV'?'b-te':'b-w');
-    return`<tr><td>${SH(i.dest,28)}</td><td>${SH(i.prod,26)}</td><td class="tr"><span class="badge ${b}">${N(i.qtd)}</span></td><td><span class="badge ${tb}">${i.tipo||'—'}</span></td></tr>`;
+  const cKW=['chop','chopeira','coluna','torre','geladeira','freezer'];
+  const cIt=items.filter(i=>cKW.some(k=>LC(i.sku).includes(k)||LC(i.produto).includes(k)));
+  const totC=cIt.reduce((s,i)=>s+i.saldo,0);
+  const dC=cIt.filter(isTipoDist).reduce((s,i)=>s+i.saldo,0);
+  $('r-chop-kpis').innerHTML=kpi('Em terceiros',N(totC),'total instaladas')+kpi('Distribuidores',N(dC),'unidades')+kpi('PDV/outros',N(totC-dC),'unidades');
+  $('r-rows-c').innerHTML=cIt.sort((a,b)=>a.tNome.localeCompare(b.tNome,'pt-BR')).map(i=>{
+    const b=i.saldo>0?'b-ok':(i.saldo<0?'b-err':'b-w');
+    const t=cliTipo[i.tId]||cliTipo[i.tNome]||'Outros';
+    const tb=t==='Distribuidor'?'b-bl':(t==='PDV/DELIV'||t==='PDV'?'b-te':'b-w');
+    return`<tr><td>${SH(i.tNome,28)}</td><td>${SH(i.produto,26)}</td><td class="tr"><span class="badge ${b}">${N(i.saldo)}</span></td><td><span class="badge ${tb}">${t}</span></td></tr>`;
   }).join('')||noRow(4);
 }
 
