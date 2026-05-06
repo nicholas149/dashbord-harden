@@ -194,14 +194,6 @@ tbody tr:hover td{background:var(--sf2)}
         <div class="sec">Chopp Barril — posição atual por produto</div>
         <div class="pg" id="e-chopp"></div>
 
-        <div class="sec">Movimentações — análise detalhada</div>
-        <div class="chips" id="e-prod-filter"></div>
-        <div class="card full" style="margin-bottom:14px">
-          <div class="ct">Entradas e Saídas por produto</div>
-          <div class="cs">Filtro por produto para análise individual</div>
-          <div class="cw"><canvas id="cELinha" height="200" role="img" aria-label="Entradas e saídas por produto"></canvas></div>
-        </div>
-
         <div class="sec">Posição consolidada — todos os SKUs</div>
         <div class="chips" id="e-cat-filter">
           <button class="chip active" onclick="eCatFilt('todos',this)">Todos</button>
@@ -211,8 +203,17 @@ tbody tr:hover td{background:var(--sf2)}
           <button class="chip" onclick="eCatFilt('ok',this)">Positivo</button>
           <button class="chip" onclick="eCatFilt('neg',this)">Negativo</button>
         </div>
+        
         <div class="tw"><div class="th"><span class="tht">SKUs</span><span class="ths" id="e-tlbl"></span></div>
         <div class="ts"><table><thead><tr><th>SKU</th><th>Produto</th><th>Cat.</th><th>Empresa</th><th class="tr">Entradas</th><th class="tr">Saídas</th><th class="tr">Saldo</th><th>Status</th></tr></thead><tbody id="e-rows"></tbody></table></div></div>
+              <div class="sec">Movimentações — análise detalhada</div>
+        <div class="chips" id="e-prod-filter"></div>
+        <div class="card full" style="margin-bottom:14px">
+          <div class="ct">Entradas e Saídas por produto</div>
+          <div class="cs">Filtro por produto para análise individual</div>
+          <div class="cw"><canvas id="cELinha" height="200" role="img" aria-label="Entradas e saídas por produto"></canvas></div>
+        </div>
+      
       </div>
 
       <!-- ══════ RETORNÁVEIS ══════ -->
@@ -280,6 +281,9 @@ tbody tr:hover td{background:var(--sf2)}
           <button class="df-clear" onclick="clearDF('a-di','a-df2',()=>buildAbastecimento(D.ab,D.fr))">Limpar</button>
         </div>
         <div class="kg" id="a-kpis"></div>
+        <div class="sec">Histórico de abastecimentos</div>
+        <div class="tw"><div class="th"><span class="tht">Registros</span><span class="ths" id="a-tlbl"></span></div>
+        <div class="ts"><table><thead><tr><th>Data</th><th>Placa</th><th>Motorista</th><th>Tipo</th><th class="tr">Litros</th><th class="tr">R$/L</th><th class="tr">Total</th><th class="tr">km ant.</th><th class="tr">km atu.</th><th class="tr">Perc.</th><th class="tr">km/L</th></tr></thead><tbody id="a-rows"></tbody></table></div></div>
 
         <div class="sec">Tanque próprio — saldo e movimentações</div>
         <div class="row2">
@@ -295,10 +299,7 @@ tbody tr:hover td{background:var(--sf2)}
 
         <div class="sec">Frotas cadastradas</div>
         <div class="fg" id="a-frota"></div>
-
-        <div class="sec">Histórico de abastecimentos</div>
-        <div class="tw"><div class="th"><span class="tht">Registros</span><span class="ths" id="a-tlbl"></span></div>
-        <div class="ts"><table><thead><tr><th>Data</th><th>Placa</th><th>Motorista</th><th>Tipo</th><th class="tr">Litros</th><th class="tr">R$/L</th><th class="tr">Total</th><th class="tr">km ant.</th><th class="tr">km atu.</th><th class="tr">Perc.</th><th class="tr">km/L</th></tr></thead><tbody id="a-rows"></tbody></table></div></div>
+      
       </div>
 
       <!-- ══════ VENDAS ══════ -->
@@ -324,6 +325,10 @@ tbody tr:hover td{background:var(--sf2)}
         </div>
         <div class="kg" id="v-kpis"></div>
 
+        <div class="sec">Últimas vendas</div>
+        <div class="tw"><div class="th"><span class="tht">Pedidos</span><span class="ths" id="v-tlbl"></span></div>
+        <div class="ts"><table><thead><tr><th>Data</th><th>Pedido</th><th>Cliente</th><th>Empresa</th><th>Produto</th><th class="tr">Litros</th><th class="tr">Barris</th><th class="tr">Valor</th><th>Origem</th><th>Canal</th></tr></thead><tbody id="v-rows"></tbody></table></div></div>
+
         <div class="sec">Evolução mensal</div>
         <div class="row2">
           <div class="card"><div class="ct">Volume mensal (litros)</div><div class="cs">Litros de chopp barril por mês</div><div class="cw"><canvas id="cVMes" height="200" role="img" aria-label="Volume mensal"></canvas></div></div>
@@ -343,10 +348,7 @@ tbody tr:hover td{background:var(--sf2)}
           <div class="card"><div class="ct">Top 10 — receita (R$)</div><div class="cs">Maiores por valor</div><div class="cw"><canvas id="cVCliR" height="260" role="img" aria-label="Top cli rec"></canvas></div></div>
         </div>
 
-        <div class="sec">Últimas vendas</div>
-        <div class="tw"><div class="th"><span class="tht">Pedidos</span><span class="ths" id="v-tlbl"></span></div>
-        <div class="ts"><table><thead><tr><th>Data</th><th>Pedido</th><th>Cliente</th><th>Empresa</th><th>Produto</th><th class="tr">Litros</th><th class="tr">Barris</th><th class="tr">Valor</th><th>Origem</th><th>Canal</th></tr></thead><tbody id="v-rows"></tbody></table></div></div>
-      </div>
+        </div>
 
     </div><!-- /content -->
   </main>
