@@ -843,9 +843,9 @@ function buildAbastecimento(rows,frota){
   const placaList=Object.keys(pp).filter(p=>saidasFrota.some(r=>r.placa===p));
   const colors=[AM,TE,BL,CO,GN,PU,SL];
   /* Por placa, por data, só saídas */
+  const p=r.placa||'—',d=r.data||'?',lit=+r.litros||0;
   const ppSaida={};
   saidasFrota.forEach(r=>{
-    const p=r.placa||'—',d=r.data||'?',lit=+r.litros||0;
     if(!ppSaida[p])ppSaida[p]={};
     ppSaida[p][d]=(ppSaida[p][d]||0)+lit;
   });
